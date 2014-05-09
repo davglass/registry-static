@@ -3,6 +3,13 @@
 var exec = require('child_process').spawn;
 var argv = process.argv.slice(2);
 var path = require('path');
+var args = require('../lib/args');
+var options = args();
+
+if (options.help || options.version) {
+    require('../lib/index');
+    return;
+}
 
 argv.unshift(path.join(__dirname, '../lib/background.js'));
 console.log('\n\n--------------------------------');
@@ -11,6 +18,12 @@ console.log('--------------------------------\n\n');
 var proc = 0;
 var run = function() {
     proc++;
+    if (proc >= options.spawn) {
+        console.log('\n\n--------------------------------');
+        console.log('spawn cap %s hit, bailing..', options.spawn);
+        console.log('--------------------------------\n\n');
+        process.exit(1);
+    }
     process.env.PROC_SPAWN = proc;
     var child = exec(process.execPath, argv, {
         env: process.env,
