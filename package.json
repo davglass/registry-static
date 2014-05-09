@@ -1,0 +1,38 @@
+{
+    "name": "registry-static",
+    "version": "0.0.0",
+    "description": "create a static, flat file based npm registry",
+    "bin": {
+        "registry-static": "./bin/registry-static"
+    },
+    "main": "./lib/index.js",
+    "dependencies": {
+        "JSONStream": "^0.7.3",
+        "async": "^0.8.0",
+        "davargs": "0.0.2",
+        "davlog": "0.0.2",
+        "event-stream": "^3.1.5",
+        "follow-registry": "~0.0.0",
+        "graceful-fs": "^2.0.3",
+        "mkdirp": "^0.4.0",
+        "patch-package-json": "0.0.2",
+        "prettysize": "0.0.3",
+        "request": "^2.34.0",
+        "rimraf": "^2.2.6",
+        "timethat": "0.0.2"
+    },
+    "devDependencies": {},
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:davglass/registry-static.git"
+    },
+    "author": "Dav Glass <davglass@gmail.com>",
+    "license": "BSD",
+    "bugs": {
+        "url": "https://github.com/davglass/registry-static/issues"
+    },
+    "homepage": "https://github.com/davglass/registry-static"
+}

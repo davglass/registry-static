@@ -1,0 +1,42 @@
+#!/usr/bin/env node
+
+var exec = require('child_process').spawn;
+var argv = process.argv.slice(2);
+var path = require('path');
+
+argv.unshift(path.join(__dirname, '../lib/background.js'));
+console.log('\n\n--------------------------------');
+console.log('starting background task..');
+console.log('--------------------------------\n\n');
+var proc = 0;
+var run = function() {
+    proc++;
+    process.env.PROC_SPAWN = proc;
+    var child = exec(process.execPath, argv, {
+        env: process.env,
+        stdio: 'inherit'
+    });
+    var a = [];
+    argv.forEach(function(item) {
+        if (item === '--clean') {
+            //Skip this, if the process restarts we don't want to clean again
+            return;
+        }
+        a.push(item);
+    });
+    argv = a;
+
+    child.on('close', function(code) {
+        if (code >= 250) {
+            //Internal error..
+            process.exit(1);
+        }
+        console.log('\n\n--------------------------------');
+        console.log('subprocess exited with code', code, 'restarting process..');
+        console.log('--------------------------------\n\n');
+        run();
+    });
+};
+
+//Start the script in a child process, restarting on error..
+run();
