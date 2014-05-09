@@ -73,3 +73,7 @@ up to 4 times. If it fails all of those, it is skipped and not stored locally.
 Each `change` request will process the entire module, not just the change alone. This is to make sure that tags
 and new versions are all in sync.
 
+build
+-----
+
+[![Build Status](https://travis-ci.org/davglass/registry-static.svg?branch=master)](https://travis-ci.org/davglass/registry-static)
