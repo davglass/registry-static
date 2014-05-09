@@ -12,7 +12,7 @@
         "davargs": "0.0.2",
         "davlog": "0.0.2",
         "event-stream": "^3.1.5",
-        "follow-registry": "~0.0.0",
+        "follow-registry": "~0.0.1",
         "graceful-fs": "^2.0.3",
         "mkdirp": "^0.4.0",
         "patch-package-json": "0.0.2",
