@@ -12,7 +12,7 @@
         "davargs": "0.0.2",
         "davlog": "0.0.2",
         "event-stream": "^3.1.5",
-        "follow-registry": "~0.0.1",
+        "follow-registry": "~0.0.3",
         "graceful-fs": "^2.0.3",
         "http-https": "^1.0.0",
         "mkdirp": "^0.4.0",
