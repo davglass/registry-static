@@ -30,17 +30,27 @@ var run = function() {
     }
     process.env.PROC_SPAWN = proc;
     var child = exec(process.execPath, argv, {
-        cwd: __dirname,
+        cwd: process.cwd(),
         env: process.env,
         stdio: 'inherit'
     });
     var a = [];
+    var sinceAdded;
     argv.forEach(function(item) {
-        if (item === '--clean') {
-            //Skip this, if the process restarts we don't want to clean again
-            return;
+        switch (item) {
+            case '--clean':
+                break;
+            case '--since':
+                sinceAdded = true;
+                break;
+            default:
+                if (sinceAdded) {
+                    sinceAdded = null;
+                    break;
+                }
+                a.push(item);
+                break;
         }
-        a.push(item);
     });
     argv = a;
 
