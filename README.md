@@ -1,10 +1,11 @@
-static npm registry
--------------------
+static npm registry mirror
+--------------------------
 
 This module follows the `skimdb` from npm and creates a flat file copy of the
 registry on your local machine. This can then be served up behind `nginx` to
-give you a local, read-only copy of the npm registry.
-
+give you a local, read-only mirror of the npm registry. It's not a private registry
+nor does it attempt to be one. It's designed to allow you to use the registry
+in-network to speed up your local development.
 
 usage
 -----
