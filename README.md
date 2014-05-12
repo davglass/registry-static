@@ -19,7 +19,7 @@ with the url provided with `-d` (so the downloads resolve locally).
 This module also uses the sequence file, so you can kill it and it should
 restart from where it left off.
 
-_WARNING: This may take quite a while to complete and a large amount of disk space_
+_WARNING: This may take quite a while to complete and a large amount of disk space (more than 117GB at last check)_
 
 directory structure
 -------------------
@@ -50,8 +50,15 @@ This allows for the following url, styles to work:
 nginx configuration
 -------------------
 
+Since we are writing a bunch of `index.json` files, you need to setup `nginx` to front the filesytem to resolve things like:
+
+    myregistry.com/foo
+                    /index.json
+
+Here is the simple `nginx.config` that I use on my local mirror.
+
     server {
-        listen       9000;
+        listen       80;
         server_name  localhost;
         charset utf-8;
         location / {
@@ -60,6 +67,7 @@ nginx configuration
         }
         error_page  404              /404.json;
     }
+
 
 logic
 -----
@@ -72,6 +80,14 @@ up to 4 times. If it fails all of those, it is skipped and not stored locally.
 
 Each `change` request will process the entire module, not just the change alone. This is to make sure that tags
 and new versions are all in sync.
+
+what it doesn't do
+------------------
+
+Smart routes like `/-/all` or `/-/short`
+
+These routes require processing of the files. You "could" technically do it with a cache and using the `fs` module
+to walk the tree and build those routes.
 
 build
 -----
