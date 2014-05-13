@@ -1,3 +1,5 @@
 {
-    "name": "npm registry static server"
+    "name": "npm registry static server",
+    "couchdb": "Welcome",
+    "version": "0.0.0"
 }
