@@ -62,13 +62,17 @@ Here is the simple `nginx.config` that I use on my local mirror.
         listen       80;
         server_name  localhost;
         charset utf-8;
+        root   /Users/davglass/registry/;
+        index  index.json;
+
         location / {
-            root   /var/www/registry/;
-            index  index.json;
+            try_files $uri $uri/index.json $uri.json =404;
         }
         error_page  404              /404.json;
     }
 
+
+__The `try_files` here with `$uri` are to keep nginx from doing a 302 redirect without the trailing `/`__
 
 logic
 -----
