@@ -65,14 +65,33 @@ Here is the simple `nginx.config` that I use on my local mirror.
         root   /Users/davglass/registry/;
         index  index.json;
 
+        #cache the crap out of the tarballs
+        location ~* ^.+\.(?:tgz)$ {
+            expires 30d;
+            tcp_nodelay off;
+            open_file_cache max=3000 inactive=120s;
+            open_file_cache_valid 45s;
+            open_file_cache_min_uses 2;
+            open_file_cache_errors off;
+        }
+
+        #don't cache the main index
+        location /index.json {
+            expires -1;
+        }
+
+        #cache all json by modified time
         location / {
+            expires modified +15m;
             try_files $uri $uri/index.json $uri.json =404;
         }
+
         error_page  404              /404.json;
     }
 
 
-__The `try_files` here with `$uri` are to keep nginx from doing a 302 redirect without the trailing `/`__
+
+_The `try_files` here with `$uri` are to keep nginx from doing a 302 redirect without the trailing `/`_
 
 logic
 -----
