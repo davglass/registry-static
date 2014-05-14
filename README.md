@@ -82,6 +82,15 @@ up to 4 times. If it fails all of those, it is skipped and not stored locally.
 Each `change` request will process the entire module, not just the change alone. This is to make sure that tags
 and new versions are all in sync.
 
+automating it
+-------------
+
+The main process always writes a `pid` file: `$TMPDIR/registry-static.pid`
+If you use the `--restart` option, it will send a `SIGHUP` to the registered process found in the `pid` file. 
+It will then restart the child process.
+
+This way you can add a crontab entry to force a restart so you don't have to monitor the process all the time.
+
 what it doesn't do
 ------------------
 

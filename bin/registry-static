@@ -9,19 +9,46 @@ var argv = process.argv.slice(2);
 var path = require('path');
 var args = require('../lib/args');
 var options = args();
+var fs = require('fs');
 
 if (options.help || options.version) {
     require('../lib/index');
     return;
 }
 
+var pidFile = path.join(options.tmp, 'registry-static.pid');
+
+if (options.restart) {
+    var pid = fs.readFileSync(pidFile, 'utf8');
+    console.log('\n\n--------------------------------');
+    console.log('Restarting process %s', pid);
+    console.log('--------------------------------\n\n');
+    process.kill(pid, 'SIGHUP');
+    return;
+}
+
+
+fs.writeFileSync(pidFile, process.pid, 'utf8');
+
+var child;
+
+process.on('SIGHUP', function() {
+    console.log('\n\n--------------------------------');
+    console.log('SIGHUP received, restarting child process (' + child.pid + ')');
+    console.log('--------------------------------\n\n');
+    process.kill(child.pid, 'SIGKILL');
+});
+
 argv.unshift(path.join(__dirname, '../lib/background.js'));
 console.log('\n\n--------------------------------');
 console.log('starting background task..');
 console.log('--------------------------------\n\n');
 var proc = 0;
-var run = function() {
-    proc++;
+var run = function(c) {
+    if (c) {
+        //Only count the respawn if there is an exit code
+        proc++;
+    }
     if (proc >= options.spawn) {
         console.log('\n\n--------------------------------');
         console.log('spawn cap %s hit, bailing..', options.spawn);
@@ -29,7 +56,8 @@ var run = function() {
         process.exit(1);
     }
     process.env.PROC_SPAWN = proc;
-    var child = exec(process.execPath, argv, {
+    process.env.PARENT_PID = process.pid;
+    child = exec(process.execPath, argv, {
         cwd: process.cwd(),
         env: process.env,
         stdio: 'inherit'
@@ -62,7 +90,7 @@ var run = function() {
         console.log('\n\n--------------------------------');
         console.log('subprocess exited with code', code, 'restarting process..');
         console.log('--------------------------------\n\n');
-        run();
+        run(code);
     });
 };
 
