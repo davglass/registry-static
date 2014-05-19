@@ -32,6 +32,11 @@ fs.writeFileSync(pidFile, process.pid, 'utf8');
 
 var child;
 
+process.on('exit', function() {
+    console.log('Cleaning up pidfile');
+    fs.unlinkSync(pidFile);
+});
+
 process.on('SIGHUP', function() {
     console.log('\n\n--------------------------------');
     console.log('SIGHUP received, restarting child process (' + child.pid + ')');
