@@ -37,6 +37,14 @@ process.on('exit', function() {
     fs.unlinkSync(pidFile);
 });
 
+if (fs.existsSync(pidFile)) {
+    console.error('\n\n--------------------------------');
+    console.error('Found a pid file, is another process running?');
+    console.error(pidFile);
+    console.error('--------------------------------\n\n');
+    process.exit(1);
+}
+
 process.on('SIGHUP', function() {
     console.log('\n\n--------------------------------');
     console.log('SIGHUP received, restarting child process (' + child.pid + ')');
