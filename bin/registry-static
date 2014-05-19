@@ -27,9 +27,6 @@ if (options.restart) {
     return;
 }
 
-
-fs.writeFileSync(pidFile, process.pid, 'utf8');
-
 var child;
 
 process.on('exit', function() {
@@ -51,6 +48,8 @@ process.on('SIGHUP', function() {
     console.log('--------------------------------\n\n');
     process.kill(child.pid, 'SIGKILL');
 });
+
+fs.writeFileSync(pidFile, process.pid, 'utf8');
 
 argv.unshift(path.join(__dirname, '../lib/background.js'));
 console.log('\n\n--------------------------------');
