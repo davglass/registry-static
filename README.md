@@ -138,7 +138,7 @@ If you are using logrotate.d, here is a sample command and config:
             notifempty
             sharedscripts
             postrotate
-                    [ -f /tmp/registry-static.pid ] && kill -s SIGPIPE `cat /tmp/registry-static.pid`
+                    [ -f /tmp/registry-static.pid ] && kill -PIPE `cat /tmp/registry-static.pid`
             endscript
     }
 
