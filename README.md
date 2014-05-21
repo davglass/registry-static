@@ -120,7 +120,7 @@ logging
 Supports `--log <path>` to log all output to a specific file.
 
 When doing this, you may want to rotate your logs. You can do this by sending the main 
-process a `SIGUSR1` signal. This will free up the file descriptor and then reattach it to the file.
+process a `SIGPIPE` signal. This will free up the file descriptor and then reattach it to the file.
 
 If you are using logrotate.d, here is a sample command and config:
 
@@ -138,7 +138,7 @@ If you are using logrotate.d, here is a sample command and config:
             notifempty
             sharedscripts
             postrotate
-                    [ -f /tmp/registry-static.pid ] && kill -USR1 `cat /tmp/registry-static.pid`
+                    [ -f /tmp/registry-static.pid ] && kill -s SIGPIPE `cat /tmp/registry-static.pid`
             endscript
     }
 

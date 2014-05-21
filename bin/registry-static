@@ -36,9 +36,9 @@ if (options.restart) {
 
 var child;
 
-process.on('SIGUSR1', function() {
-    //pass SIGUSR1 to the child for log rotation
-    process.kill(child.pid, 'SIGUSR1');
+process.on('SIGPIPE', function() {
+    //pass SIGPIPE to the child for log rotation
+    process.kill(child.pid, 'SIGPIPE');
 });
 
 process.on('SIGINT', function() {
