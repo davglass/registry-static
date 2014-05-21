@@ -114,6 +114,35 @@ It will then restart the child process.
 
 This way you can add a crontab entry to force a restart so you don't have to monitor the process all the time.
 
+logging
+-------
+
+Supports `--log <path>` to log all output to a specific file.
+
+When doing this, you may want to rotate your logs. You can do this by sending the main 
+process a `SIGUSR1` signal. This will free up the file descriptor and then reattach it to the file.
+
+If you are using logrotate.d, here is a sample command and config:
+
+`registry-static -d my.registry.com -o /var/www/ --tmp /tmp/ --log /var/log/registry-static/output.log`
+
+
+    /etc/logrotate.d/registry-static:
+
+    /var/log/registry-static/*.log {
+            daily
+            missingok
+            rotate 52
+            compress
+            delaycompress
+            notifempty
+            sharedscripts
+            postrotate
+                    [ -f /tmp/registry-static.pid ] && kill -USR1 `cat /tmp/registry-static.pid`
+            endscript
+    }
+
+
 what it doesn't do
 ------------------
 
