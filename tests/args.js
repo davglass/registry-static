@@ -19,7 +19,7 @@ var exit = process.exit;
 var tests = {
     'should export': {
         topic: function() {
-            return args
+            return args;
         },
         'function': function(d) {
             assert.isFunction(d);
@@ -30,8 +30,9 @@ var tests = {
             var code;
             process.exit = function(c) {
                 code = c;
-            }
+            };
             args();
+            process.exit = exit;
             return code;
         },
         'and error': function(d) {

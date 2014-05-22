@@ -10,7 +10,7 @@ var tests = {
             console.log = function(str) {
                 data = str;
             };
-            var help = require('../lib/help');
+            require('../lib/help');
             console.log = log;
             return data;
         },
