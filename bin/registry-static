@@ -25,6 +25,10 @@ var log = require('davlog');
 
 var pidFile = path.join(options.tmp, 'registry-static.pid');
 
+if (options.sync) {
+    return require('../lib/sync')(options);
+}
+
 if (options.restart) {
     var pid = fs.readFileSync(pidFile, 'utf8');
     log.info('\n\n--------------------------------');
