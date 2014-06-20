@@ -28,6 +28,9 @@ var pidFile = path.join(options.tmp, 'registry-static.pid');
 if (options.sync) {
     return require('../lib/sync')(options);
 }
+if (options.check) {
+    return require('../lib/check.js');
+}
 
 if (options.restart) {
     var pid = fs.readFileSync(pidFile, 'utf8');
