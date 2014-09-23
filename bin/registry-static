@@ -54,12 +54,23 @@ process.on('SIGINT', function() {
     process.exit();
 });
 
-if (fs.existsSync(pidFile)) {
+try {
+    // Check if PID the PID file points to is still alive.
+    // If this throws, the file doesn't exist and we're fine.
+    var pid = parseInt(fs.readFileSync(pidFile, 'utf8'), 10);
+
+    // If this throws, the process doesn't exist.
+    process.kill(pid, 0);
+
+    // We're here because neither `fs.readFileSync` nor `process.kill` threw.
+    // We have a PID file pointing to an alive process. Bail out.
     console.error('\n\n--------------------------------');
-    console.error('Found a pid file, is another process running?');
+    console.error('Found a pid file, process with PID ' + pid + ' is still running');
     console.error(pidFile);
     console.error('--------------------------------\n\n');
     process.exit(1);
+}
+catch (er) {
 }
 
 process.on('SIGHUP', function() {
