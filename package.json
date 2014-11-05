@@ -7,27 +7,27 @@
   },
   "main": "./lib/index.js",
   "dependencies": {
-    "JSONStream": "^0.7.3",
-    "async": "^0.8.0",
-    "davargs": "0.0.2",
-    "davlog": "0.0.2",
+    "JSONStream": "~0.7.3",
+    "async": "~0.8.0",
+    "davargs": "~0.0.2",
+    "davlog": "~0.0.2",
     "event-stream": "^3.1.5",
     "follow-registry": "~0.0.3",
     "graceful-fs": "^2.0.3",
     "http-https": "^1.0.0",
-    "mkdirp": "^0.4.0",
-    "patch-package-json": "0.0.2",
-    "prettysize": "0.0.3",
+    "mkdirp": "~0.4.0",
+    "patch-package-json": "~0.0.2",
+    "prettysize": "~0.0.3",
     "request": "^2.34.0",
     "rimraf": "^2.2.6",
-    "strip-ansi": "^0.2.1",
-    "timethat": "0.0.2"
+    "strip-ansi": "~0.2.1",
+    "timethat": "~0.0.2"
   },
   "devDependencies": {
-    "istanbul": "^0.2.8",
+    "istanbul": "~0.2.8",
     "jshint": "^2.5.1",
     "mockery": "^1.4.0",
-    "vows": "^0.7.0"
+    "vows": "~0.7.0"
   },
   "scripts": {
     "pretest": "jshint ./bin/* ./lib/* ./tests/*",
