@@ -1,6 +1,7 @@
 var vows = require('vows'),
     assert = require('assert'),
-    mockery = require('mockery');
+    mockery = require('mockery'),
+    log = console.log;
 
 mockery.registerMock('davlog', {
     err: function() {
@@ -62,6 +63,26 @@ var tests = {
             assert.equal(d.domain, 'foobar.com');
             assert.equal(d.dir, __dirname);
             assert.equal(d.limit, 10);
+        }
+    },
+    'process help': {
+        topic: function() {
+            process.argv = [
+                'node',
+                'asdfasda',
+                '--help'
+            ];
+            var data;
+            console.log = function(str) {
+                data = str;
+            };
+            getArgs();
+            console.log = log;
+            return data;
+        },
+        'and output': function(d) {
+            assert.ok(d);
+            assert.isTrue(d.indexOf('registry-static@') > -1);
         }
     },
     'process version': {
