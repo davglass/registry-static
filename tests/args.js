@@ -12,27 +12,32 @@ mockery.enable({
     warnOnReplace: false,
     warnOnUnregistered: false
 });
-var args = require('../lib/args');
 
 var exit = process.exit;
+
+function getArgs(exitFunc) {
+    process.exit = exitFunc || function() {};
+    mockery.resetCache();
+    var args = require('../lib/args');
+    process.exit = exit;
+    return args;
+}
 
 var tests = {
     'should export': {
         topic: function() {
-            return args;
+            return getArgs();
         },
-        'function': function(d) {
-            assert.isFunction(d);
+        'object': function(d) {
+            assert.isObject(d);
         }
     },
     'process no args': {
         topic: function() {
             var code;
-            process.exit = function(c) {
+            getArgs(function(c) {
                 code = c;
-            };
-            args();
-            process.exit = exit;
+            });
             return code;
         },
         'and error': function(d) {
@@ -50,7 +55,7 @@ var tests = {
                 '--domain',
                 'foobar.com'
             ];
-            return args();
+            return getArgs();
         },
         'and return good': function(d) {
             assert.ok(d);
@@ -66,7 +71,7 @@ var tests = {
                 'asdfasda',
                 '--version'
             ];
-            return args();
+            return getArgs();
         },
         'and return good': function(d) {
             assert.ok(d);
