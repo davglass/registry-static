@@ -8,8 +8,7 @@ var exec = require('child_process').spawn;
 var argv = process.argv.slice(2);
 var path = require('path');
 var mkdirp = require('mkdirp');
-var args = require('../lib/args');
-var options = args();
+var options = require('../lib/args');
 var fs = require('fs');
 var strip = require('strip-ansi');
 

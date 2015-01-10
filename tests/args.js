@@ -1,6 +1,7 @@
 var vows = require('vows'),
     assert = require('assert'),
-    mockery = require('mockery');
+    mockery = require('mockery'),
+    log = console.log;
 
 mockery.registerMock('davlog', {
     err: function() {
@@ -12,27 +13,32 @@ mockery.enable({
     warnOnReplace: false,
     warnOnUnregistered: false
 });
-var args = require('../lib/args');
 
 var exit = process.exit;
+
+function getArgs(exitFunc) {
+    process.exit = exitFunc || function() {};
+    mockery.resetCache();
+    var args = require('../lib/args');
+    process.exit = exit;
+    return args;
+}
 
 var tests = {
     'should export': {
         topic: function() {
-            return args;
+            return getArgs();
         },
-        'function': function(d) {
-            assert.isFunction(d);
+        'object': function(d) {
+            assert.isObject(d);
         }
     },
     'process no args': {
         topic: function() {
             var code;
-            process.exit = function(c) {
+            getArgs(function(c) {
                 code = c;
-            };
-            args();
-            process.exit = exit;
+            });
             return code;
         },
         'and error': function(d) {
@@ -50,13 +56,33 @@ var tests = {
                 '--domain',
                 'foobar.com'
             ];
-            return args();
+            return getArgs();
         },
         'and return good': function(d) {
             assert.ok(d);
             assert.equal(d.domain, 'foobar.com');
             assert.equal(d.dir, __dirname);
             assert.equal(d.limit, 10);
+        }
+    },
+    'process help': {
+        topic: function() {
+            process.argv = [
+                'node',
+                'asdfasda',
+                '--help'
+            ];
+            var data;
+            console.log = function(str) {
+                data = str;
+            };
+            getArgs();
+            console.log = log;
+            return data;
+        },
+        'and output': function(d) {
+            assert.ok(d);
+            assert.isTrue(d.indexOf('registry-static@') > -1);
         }
     },
     'process version': {
@@ -66,7 +92,7 @@ var tests = {
                 'asdfasda',
                 '--version'
             ];
-            return args();
+            return getArgs();
         },
         'and return good': function(d) {
             assert.ok(d);
