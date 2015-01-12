@@ -114,6 +114,56 @@ It will then restart the child process.
 
 This way you can add a crontab entry to force a restart so you don't have to monitor the process all the time.
 
+hooks
+-----
+
+If you provide `--hooks <path>`, the module at `path` will be `required`. It is expected to export an object
+whose properties are hook functions. A hook function has the following signature:
+
+```javascript
+function(data, callback){ /* ... */ }
+```
+
+Here, `data` is a blob of data corresponding to the current state. Usually it's a set of useful metadata about
+the package currently being processed.
+
+The callback's signature is:
+
+```javascript
+function(error, shouldSave){ /* ... */ }
+```
+
+Where `shouldSave` is a boolean stating whether or not to actually perform the action that happens right
+after the hook (usually writing something to disk). In most cases, you'll want to call the callback with
+`callback(null, true)`. To prevent the action from happening, you can do `callback(null, false)`.
+
+Please don't throw any errors inside a hook function. If an error occurs, pass it along as a first parameter to
+the `callback`.
+
+Here are the currently provided hooks:
+
+* **`globalIndexJson`**: Called before writing an update to the top-level `index.json`.
+* **`indexJson`**: Called before writing a package's main `index.json`.
+* **`versionJson`**: Called before writing the `index.json` for a particular package version.
+* **`tarball`**: Called before downloading/verifying/writing a package tarball.
+
+For example, if you want to prevent writing any tarballs, to have a metadata-only mirror (like skimdb), you could do something like this:
+
+```javascript
+// hooks.js
+exports.tarball = function(data, callback) {
+    // Because this doesn't explicitly provide a truthy second arg,
+    // it will not download and save the tarball.
+    callback();
+}
+```
+
+And then, if it's in your current directory, you can do something like:
+
+```bash
+registry-static -d registry.npmjs.org --hooks ./hooks.js
+```
+
 logging
 -------
 
