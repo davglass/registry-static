@@ -137,6 +137,9 @@ Where `shouldSave` is a boolean stating whether or not to actually perform the a
 after the hook (usually writing something to disk). In most cases, you'll want to call the callback with
 `callback(null, true)`. To prevent the action from happening, you can do `callback(null, false)`.
 
+Note the `data` passed in is a *reference*, so modifications to it may have side effects. For example, modifying
+`data.tarball` in the `tarball` callback will change the location of the tarball.
+
 Please don't throw any errors inside a hook function. If an error occurs, pass it along as a first parameter to
 the `callback`.
 
