@@ -146,6 +146,7 @@ Here are the currently provided hooks:
 * **`indexJson`**: Called before writing a package's main `index.json`.
 * **`versionJson`**: Called before writing the `index.json` for a particular package version.
 * **`tarball`**: Called before downloading/verifying/writing a package tarball.
+* **`afterTarball`**: Called after downloading/verifying/writing a package tarball. Note that the second callback parameter is ignored for this one.
 
 For example, if you want to prevent writing any tarballs, to have a metadata-only mirror (like skimdb), you could do something like this:
 
