@@ -1,11 +1,10 @@
-/**
- *
- */
 /*
 Copyright (c) 2014, Yahoo! Inc. All rights reserved.
 Code licensed under the BSD License.
 See LICENSE file.
 */
+
+//You'll need to `npm install level-party`
 var level = require('level-party');
 
 var db = level('./npm.db', {valueEncoding: 'json'});

@@ -26,7 +26,6 @@
   "devDependencies": {
     "istanbul": "~0.2.8",
     "jshint": "^2.5.1",
-    "level-party": "^1.0.1",
     "mockery": "^1.4.0",
     "vows": "~0.7.0"
   },
