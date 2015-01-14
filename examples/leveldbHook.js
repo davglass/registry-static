@@ -10,7 +10,7 @@ var level = require('level-party');
 
 var db = level('./npm.db', {valueEncoding: 'json'});
 
-exports.versionJson = function(data, callback) {
+exports.versionJson = function(options, data, callback) {
     db.put(data.json.name+'@'+data.version, data.json, function (err) {
         if (err) return callback(err);
         //Swallow errors for now. This is just an example.
@@ -20,7 +20,7 @@ exports.versionJson = function(data, callback) {
     });
 };
 
-exports.indexJson = function(data, callback) {
+exports.indexJson = function(options, data, callback) {
     db.put(data.json.name, data.json, function (err) {
         if (err) return callback(err);
         //Swallow errors for now. This is just an example.

@@ -121,10 +121,13 @@ If you provide `--hooks <path>`, the module at `path` will be `required`. It is 
 whose properties are hook functions. A hook function has the following signature:
 
 ```javascript
-function(data, callback){ /* ... */ }
+function(options, data, callback){ /* ... */ }
 ```
 
-Here, `data` is a blob of data corresponding to the current state. Usually it's a set of useful metadata about
+`options` is the result of [yargs](https://github.com/chevex/yargs) parsing the command-line options and/or
+config file. You can use this to refer to any existing options, or to introduce your own.
+
+`data` is a blob of data corresponding to the current state. Usually it's a set of useful metadata about
 the package currently being processed.
 
 The callback's signature is:
