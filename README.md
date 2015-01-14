@@ -151,22 +151,7 @@ Here are the currently provided hooks:
 * **`tarball`**: Called before downloading/verifying/writing a package tarball.
 * **`afterTarball`**: Called after downloading/verifying/writing a package tarball. Note that the second callback parameter is ignored for this one.
 
-For example, if you want to prevent writing any tarballs, to have a metadata-only mirror (like skimdb), you could do something like this:
-
-```javascript
-// hooks.js
-exports.tarball = function(data, callback) {
-    // Because this doesn't explicitly provide a truthy second arg,
-    // it will not download and save the tarball.
-    callback();
-}
-```
-
-And then, if it's in your current directory, you can do something like:
-
-```bash
-registry-static -d registry.npmjs.org --hooks ./hooks.js
-```
+Some examples are included in the `examples` directory.
 
 logging
 -------
