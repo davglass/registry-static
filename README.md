@@ -114,6 +114,48 @@ It will then restart the child process.
 
 This way you can add a crontab entry to force a restart so you don't have to monitor the process all the time.
 
+hooks
+-----
+
+If you provide `--hooks <path>`, the module at `path` will be `required`. It is expected to export an object
+whose properties are hook functions. A hook function has the following signature:
+
+```javascript
+function(options, data, callback){ /* ... */ }
+```
+
+`options` is the result of [yargs](https://github.com/chevex/yargs) parsing the command-line options and/or
+config file. You can use this to refer to any existing options, or to introduce your own.
+
+`data` is a blob of data corresponding to the current state. Usually it's a set of useful metadata about
+the package currently being processed.
+
+The callback's signature is:
+
+```javascript
+function(error, shouldSave){ /* ... */ }
+```
+
+Where `shouldSave` is a boolean stating whether or not to actually perform the action that happens right
+after the hook (usually writing something to disk). In most cases, you'll want to call the callback with
+`callback(null, true)`. To prevent the action from happening, you can do `callback(null, false)`.
+
+Note the `data` passed in is a *reference*, so modifications to it may have side effects. For example, modifying
+`data.tarball` in the `tarball` callback will change the location of the tarball.
+
+Please don't throw any errors inside a hook function. If an error occurs, pass it along as a first parameter to
+the `callback`.
+
+Here are the currently provided hooks:
+
+* **`globalIndexJson`**: Called before writing an update to the top-level `index.json`.
+* **`indexJson`**: Called before writing a package's main `index.json`.
+* **`versionJson`**: Called before writing the `index.json` for a particular package version.
+* **`tarball`**: Called before downloading/verifying/writing a package tarball.
+* **`afterTarball`**: Called after downloading/verifying/writing a package tarball. Note that the second callback parameter is ignored for this one.
+
+Some examples are included in the `examples` directory.
+
 logging
 -------
 
