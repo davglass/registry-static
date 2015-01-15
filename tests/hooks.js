@@ -68,19 +68,6 @@ function runHooks(overrides, callback) {
     });
 }
 
-var tests = {};
-[
-    ['no', []],
-    ['all', hookNames],
-    ['some', ['tarball', 'versionJson']]
-].forEach(function(t){
-    tests['when '+t[0]+' hooks overridden'] = {
-        topic: function() {
-            runHooks(t[1], this.callback);
-        },
-        'all the hooks work': assert.ifError
-    };
-});
 var tests = {
     'when no hooks overridden': {
         topic: function() {
