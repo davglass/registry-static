@@ -7,7 +7,6 @@
   },
   "main": "./lib/index.js",
   "dependencies": {
-    "JSONStream": "~0.7.3",
     "async": "~0.8.0",
     "davlog": "~0.0.2",
     "event-stream": "^3.1.5",
