@@ -9,61 +9,63 @@ var QUIET = false;
 var LOG;
 var logFn;
 var errFn;
-
-mockery.registerMock('davlog', {
-    init: noop,
-    info: noop,
-    quiet: function() {
-        called.quiet = called.quiet || 0;
-        called.quiet++;
-    },
-    get logFn() { return logFn; },
-    set logFn(a) {
-        logFn = a;
-        called.logFn = called.logFn || 0;
-        called.logFn++;
-    },
-    get errFn() { return errFn; },
-    set errFn(a) {
-        errFn = a;
-        called.errFn = called.logFn || 0;
-        called.errFn++;
-    }
-});
-
 var logged;
 
-mockery.registerMock('fs', {
-    createWriteStream: function() {
-        called.createWriteStream = called.createWriteStream || 0;
-        called.createWriteStream++;
-        return {
-            write: function(str) {
-                logged = str;
-            },
-            end: function() {
-                called.end = called.end || 0;
-                called.end++;
-            }
-        };
-    }
-});
+var setupMocks = function() {
 
-mockery.registerMock('mkdirp', {
-    sync: function() {
-        called.mkdirp = called.mkdirp || 0;
-        called.mkdirp++;
-    }
-});
+    mockery.registerMock('davlog', {
+        init: noop,
+        info: noop,
+        quiet: function() {
+            called.quiet = called.quiet || 0;
+            called.quiet++;
+        },
+        get logFn() { return logFn; },
+        set logFn(a) {
+            logFn = a;
+            called.logFn = called.logFn || 0;
+            called.logFn++;
+        },
+        get errFn() { return errFn; },
+        set errFn(a) {
+            errFn = a;
+            called.errFn = called.logFn || 0;
+            called.errFn++;
+        }
+    });
 
-mockery.registerMock('./args', {
-    get quiet() { return QUIET; },
-    get log() { return LOG; }
-});
+    mockery.registerMock('fs', {
+        createWriteStream: function() {
+            called.createWriteStream = called.createWriteStream || 0;
+            called.createWriteStream++;
+            return {
+                write: function(str) {
+                    logged = str;
+                },
+                end: function() {
+                    called.end = called.end || 0;
+                    called.end++;
+                }
+            };
+        }
+    });
 
+    mockery.registerMock('mkdirp', {
+        sync: function() {
+            called.mkdirp = called.mkdirp || 0;
+            called.mkdirp++;
+        }
+    });
+
+    mockery.registerMock('./args', {
+        get quiet() { return QUIET; },
+        get log() { return LOG; }
+    });
+};
 
 var tests = {
     setup: function() {
+        setupMocks();
         mockery.enable({
             useCleanCache: true,
             warnOnReplace: false,
@@ -136,6 +138,7 @@ var tests = {
         }
     },
     teardown: function() {
+        mockery.deregisterAll();
         mockery.disable();
     }
 };
