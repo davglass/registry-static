@@ -13,7 +13,6 @@ var hookNames = [
 ];
 var testError = new Error();
 
-mockery.registerMock('./args.js', options);
 
 function getHooks(overrides) {
     var optHooks = {};
@@ -23,6 +22,7 @@ function getHooks(overrides) {
         });
     }
     options.hooks = optHooks;
+    mockery.registerMock('./args.js', options);
     mockery.enable({
         useCleanCache: true,
         warnOnReplace: false,
