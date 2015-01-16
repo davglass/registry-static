@@ -94,8 +94,8 @@ var tests = {
         setupMocks();
         mockery.enable({
             useCleanCache: true,
-            //warnOnReplace: false,
-            //warnOnUnregistered: false
+            warnOnReplace: false,
+            warnOnUnregistered: false
         });
     },
     'should export': {
