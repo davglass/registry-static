@@ -28,7 +28,7 @@ if (options.sync) {
     return require('../lib/sync')(options);
 }
 if (options.check) {
-    return require('../lib/check.js');
+    return require('../lib/check.js').run();
 }
 
 if (options.restart) {
