@@ -4,18 +4,24 @@ var vows = require('vows'),
 
 var startCalled = false;
 
-mockery.registerMock('./index', {
-    start: function () {
-        assert.equal(arguments.length, 0);
-        startCalled = true;
-    }
-});
+
 
 var tests = {
     'requires index': {
         topic: function () {
-            mockery.enable();
+            mockery.enable({
+                useCleanCache: true,
+                warnOnReplace: false,
+                warnOnUnregistered: false
+            });
+            mockery.registerMock('./index', {
+                start: function () {
+                    assert.equal(arguments.length, 0);
+                    startCalled = true;
+                }
+            });
             require('../lib/background');
+            mockery.deregisterAll();
             mockery.disable();
             return startCalled;
         },
