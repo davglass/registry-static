@@ -3,20 +3,34 @@ var vows = require('vows'),
     mockery = require('mockery'),
     crypto = require('crypto'),
     fs = require('fs'),
-    createReadStream = fs.createReadStream;
+    http = require('http-https'),
+    createReadStream = fs.createReadStream,
+    createWriteStream = fs.createWriteStream;
 
 function noop () {}
 
-function setupMocks() {
+function setupMocks(log, badRegistry) {
+    log = log || [];
+    mockery.resetCache();
     mockery.registerMock('fs', {
         exists: function(file, callback) {
             callback(/existing.tgz/.test(file));
         },
         createReadStream: function(file) {
             return createReadStream(__filename);
+        },
+        createWriteStream: function(file) {
+            return createWriteStream('/dev/null');
+        },
+        mkdir: function () {
+            arguments[arguments.length-1]();
         }
     });
-    mockery.registerMock('./args', {});
+    mockery.registerMock('./args', {
+        get registry() {
+            return badRegistry ? 'http://fhgidygfi' : 'http://registry.npmjs.org';
+        }
+    });
     mockery.registerMock('davlog', {
         init: noop,
         info: noop,
@@ -30,24 +44,31 @@ function setupMocks() {
         warnOnReplace: false,
         warnOnUnregistered: false
     });
+    verify = require('../lib/verify');
+    cacheVerify = verify.verify;
+    cacheUpdate = verify.update;
 }
 
-function setThisFileHash (callback) {
-    var shasum = crypto.createHash('sha1');
-    shasum.setEncoding('hex');
-    fs.createReadStream(__filename)
-        .on('end', function(){
-            shasum.end();
-            thisFileHash = shasum.read();
-            callback();
-        })
-    .pipe(shasum);
+function stubUpdate() {
+    verify.verify = cacheVerify;
+    verify.update = function(info, callback) {
+        info.updateCalled = true;
+        callback(null, info);
+    };
+}
+
+function stubVerify() {
+    verify.update = cacheUpdate;
+    verify.verify = function(info, callback) {
+        info.verifyCalled = true;
+        callback(null, info);
+    };
 }
 
 var verify;
 var cacheUpdate;
+var cacheVerify;
 var thisFileHash;
-var log = [];
 
 var tests = {
     'should export': {
@@ -60,36 +81,107 @@ var tests = {
             assert.isObject(d);
         },
         'with methods': function(d) {
-            ['verify', 'update'].forEach(function(name) {
+            ['verify', 'update', 'report', 'counter'].forEach(function(name) {
                 assert.isFunction(d[name]);
             });
         },
     },
+    'update method': {
+        'downloads the file': {
+            topic: function() {
+                var log = [];
+                setupMocks(log);
+                stubVerify();
+                var callback = this.callback;
+                var info = {
+                    path: '//registry-static/-/registry-static-0.1.11.tgz',
+                    tarball: 'registry-static-0.1.11.tgz'
+                };
+                verify.update(info, function(err) {
+                    callback(err, {log: log, info: info});
+                });
+            },
+            'and then calls verify': function(d) {
+                assert.equal(d.log.length, 0);
+                assert.equal(d.info.http, 200);
+                assert(d.info.verifyCalled);
+            }
+        },
+        'tries to download with bad server': {
+            topic: function() {
+                var log = [];
+                setupMocks(log, true);
+                stubVerify();
+                var callback = this.callback;
+                var info = {
+                    path: '//async/-/async-0.9.0.tgz',
+                    tarball: 'async-0.9.0.tgz'
+                };
+                verify.update(info, function(err) {
+                    badRegistry = false;
+                    callback(null, {err: err, log: log});
+                });
+            },
+            'calls back with an error': function(d) {
+                assert.deepEqual(d.log, [' [1] failed to download async-0.9.0.tgz']);
+                assert.equal(d.err.message, 'failed to download async-0.9.0.tgz');
+            }
+        },
+        'tries to download with a 404 file': {
+            topic: function() {
+                var log = [];
+                setupMocks(log);
+                stubVerify();
+                var callback = this.callback;
+                var info = {
+                    path: '//foobarbaz.tgz',
+                    tarball: 'foo-1.0.0.tgz'
+                };
+                verify.update(info, function(err) {
+                    callback(null, {err: err, log: log});
+                });
+            },
+            'calls back with an error': function(d) {
+                assert.deepEqual(d.log, [' [1] failed to download with a 404 foo-1.0.0.tgz']);
+                assert.equal(d.err.message, 'failed to download foo-1.0.0.tgz');
+            }
+        },
+        teardown: function() {
+            mockery.disable();
+        }
+    },
     'verify method': {
         topic: function() {
-            setupMocks();
-            verify = require('../lib/verify');
-            cacheUpdate = verify.update;
-            verify.update = function(info, callback) {
-                info.updateCalled = true;
-                callback(null, info);
-            };
-
-            callback = this.callback;
-            setThisFileHash(function() {
+            var callback = this.callback;
+            var shasum = crypto.createHash('sha1');
+            shasum.setEncoding('hex');
+            fs.createReadStream(__filename)
+                .on('end', function(){
+                    shasum.end();
+                    thisFileHash = shasum.read();
+                    callback();
+                })
+            .pipe(shasum);
+        },
+        'checks hash': {
+            topic: function (){
+                setupMocks();
+                stubUpdate();
                 var info = {
                     path: '/the/path/1',
                     tarball: 'existing.tgz',
                     shasum: thisFileHash
                 };
-                verify.verify(info, callback);
-            });
-        },
-        'checks hash and doesn\'t call update': function(d) {
-            assert(!d.updateCalled);
+                verify.verify(info, this.callback);
+            },
+            'and doen\'t call update': function(d) {
+                assert(!d.updateCalled);
+            }
         },
         'with non-existent tarball':{
             topic: function() {
+                setupMocks();
+                stubUpdate();
                 var info = {
                     path: '/the/path/2',
                     tarball: 'notarealfile.tgz',
@@ -103,41 +195,50 @@ var tests = {
         },
         'too many times': {
             topic: function() {
-                log = [];
+                var log = [];
+                setupMocks(log);
+                stubUpdate();
                 var info = {
                     path: '/the/path/3',
                     tarball: 'existing.tgz',
                     shasum: thisFileHash
                 };
                 verify.counter()[info.path] = 4;
-                verify.verify(info, this.callback);
+                var callback = this.callback;
+                verify.verify(info, function(err, info){
+                    callback(err, {info: info, log: log});
+                });
             },
             'logged the error but succeeded anyway': function(d) {
-                assert(d);
-                assert.deepEqual(log, [' [4] file appears to be corrupt, skipping.. existing.tgz']);
-                log = [];
+                assert(d.info);
+                assert.deepEqual(d.log, [' [4] file appears to be corrupt, skipping.. existing.tgz']);
             }
         },
         'bad hash': {
             topic: function() {
-                log = [];
+                var log = [];
+                setupMocks(log);
+                stubUpdate();
                 var info = {
                     path: '/the/path/4',
                     tarball: 'existing.tgz',
                     shasum: 'badHash'
                 };
-                verify.verify(info, this.callback);
+                var callback = this.callback;
+                verify.verify(info, function(err, info){
+                    callback(err, {info: info, log: log});
+                });
             },
             'logged the error and called update': function(d) {
-                assert(d.updateCalled);
-                assert.deepEqual(log, [
+                assert(d.info.updateCalled);
+                assert.deepEqual(d.log, [
                         ' [0] shasum check failed for /the/path/4',
                         ' [0] found ' + thisFileHash + ' expected badHash'
                 ]);
             }
         },
         teardown: function() {
-            verify.update = cacheUpdate;
+            mockery.disable();
         }
     }
 };
