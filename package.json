@@ -7,7 +7,6 @@
   },
   "main": "./lib/index.js",
   "dependencies": {
-    "JSONStream": "~0.7.3",
     "async": "~0.8.0",
     "davlog": "~0.0.2",
     "event-stream": "^3.1.5",
@@ -24,10 +23,10 @@
     "yargs": "^1.3.3"
   },
   "devDependencies": {
-    "istanbul": "~0.2.8",
+    "istanbul": "~0.3.5",
     "jshint": "^2.5.1",
     "mockery": "^1.4.0",
-    "vows": "~0.7.0"
+    "vows": "~0.8.1"
   },
   "scripts": {
     "pretest": "jshint ./bin/* ./lib/* ./tests/*",
