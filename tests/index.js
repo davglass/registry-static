@@ -237,6 +237,21 @@ var tests = {
             assert.equal(d.processing, 'bar');
             assert.equal(called.saveTarballs, 1);
             assert.equal(called.saveJSON, 1);
+        },
+        'when bad JSON is provided': {
+            topic: function() {
+                var self = this;
+                var oldCalled = called;
+                called = {};
+                index.change({json: '<xml>not json</xml>'}, function(err){
+                    var newCalled = called;
+                    called = oldCalled;
+                    self.callback(null, newCalled);
+                });
+            },
+            'no error. callback is called (early)': function (d) {
+                assert.deepEqual({}, d);
+            }
         }
     },
     teardown: function() {
