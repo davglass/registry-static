@@ -129,14 +129,19 @@ If you provide `--hooks <path>`, the module at `path` will be `required`. It is 
 whose properties are hook functions. A hook function has the following signature:
 
 ```javascript
-function(options, data, callback){ /* ... */ }
+function(data, callback){ /* ... */ }
 ```
-
-`options` is the result of [yargs](https://github.com/chevex/yargs) parsing the command-line options and/or
-config file. You can use this to refer to any existing options, or to introduce your own.
 
 `data` is a blob of data corresponding to the current state. Usually it's a set of useful metadata about
 the package currently being processed.
+
+`this.options` is the result of [yargs](https://github.com/chevex/yargs) parsing the command-line options and/or
+config file. You can use this to refer to any existing options, or to introduce your own.
+
+`this.log` is `registry-static`'s instance of `davlog`.
+
+Hook functions are called with the same context each time and for each hook. It's one context shared throughout
+the whole process. You can use this to share data between invocations or different hooks.
 
 The callback's signature is:
 
