@@ -4,6 +4,7 @@ var vows = require('vows'),
     assert = require('assert');
 
 var options = {hooks:{}};
+var davlog = {};
 var hookNames = [
     'tarball',
     'afterTarball',
@@ -23,6 +24,7 @@ function getHooks(overrides) {
     }
     options.hooks = optHooks;
     mockery.registerMock('./args.js', options);
+    mockery.registerMock('davlog', davlog);
     mockery.enable({
         useCleanCache: true,
         warnOnReplace: false,
@@ -33,8 +35,9 @@ function getHooks(overrides) {
     return hooks;
 }
 
-function overrideHook(opts, data, callback) {
-    assert.strictEqual(opts, options);
+function overrideHook(data, callback) {
+    assert.strictEqual(this.options, options);
+    assert.strictEqual(this.log, davlog);
     if (data === 'err') {
         return callback(testError);
     }
