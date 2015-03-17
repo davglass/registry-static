@@ -30,6 +30,9 @@ if (options.sync) {
 if (options.check) {
     return require('../lib/check.js').run();
 }
+if (options.replport) {
+    require('../lib/repl')();
+}
 
 if (options.restart) {
     var pid = fs.readFileSync(pidFile, 'utf8');
