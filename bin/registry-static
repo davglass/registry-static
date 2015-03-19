@@ -79,6 +79,7 @@ process.on('SIGHUP', function() {
     log.info('\n\n--------------------------------');
     log.info('SIGHUP received, restarting child process (' + child.pid + ')');
     log.info('--------------------------------\n\n');
+    child.stdout.unpipe(logger.writer);
     process.kill(child.pid, 'SIGKILL');
 });
 
@@ -105,12 +106,19 @@ var run = function(c) {
     child = exec(process.execPath, argv, {
         cwd: process.cwd(),
         env: process.env,
-        stdio: 'inherit'
+        stdio: [process.stdin, 'pipe', 'pipe']
     });
     var a = [];
-    var sinceAdded;
+    var sinceAdded, lastWasLog;
     argv.forEach(function(item) {
+        if (lastWasLog) {
+            lastWasLog = false;
+            return;
+        }
         switch (item) {
+            case '--log':
+                lastWasLog = true;
+                break;
             case '--clean':
                 break;
             case '--since':
@@ -137,6 +145,8 @@ var run = function(c) {
         log.info('--------------------------------\n\n');
         run(code);
     });
+
+    child.stdout.pipe(logger.writer);
 };
 
 //Start the script in a child process, restarting on error..

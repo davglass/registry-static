@@ -1,5 +1,6 @@
 var vows = require('vows'),
     assert = require('assert'),
+    EventEmitter = require('events').EventEmitter,
     mockery = require('mockery'),
     logger,
     noop = function() {};
@@ -38,15 +39,15 @@ var setupMocks = function() {
         createWriteStream: function() {
             called.createWriteStream = called.createWriteStream || 0;
             called.createWriteStream++;
-            return {
-                write: function(str) {
-                    logged = str;
-                },
-                end: function() {
-                    called.end = called.end || 0;
-                    called.end++;
-                }
+            var emitter = new EventEmitter();
+            emitter.write = function(str) {
+                logged = str;
             };
+            emitter.end = function() {
+                called.end = called.end || 0;
+                called.end++;
+            };
+            return emitter;
         }
     });
 
