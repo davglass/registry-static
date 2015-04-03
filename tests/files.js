@@ -4,13 +4,7 @@ var vows = require('vows'),
     mockery = require('mockery');
 
 var testError = new Error();
-var fsMock = {
-    writeFile: function(filename, data, callback) {
-        this.written.push([filename, data]);
-        callback();
-    },
-    written: []
-};
+var memblob = require('abstract-blob-store')();
 var noop = function() { return ''; };
 var setupMocks = function() {
     mockery.registerMock('./verify.js', {
@@ -25,7 +19,8 @@ var setupMocks = function() {
     });
     mockery.registerMock('./args.js', {
         dir: __dirname,
-        limit: 2
+        limit: 2,
+        blobstore: memblob
     });
     mockery.registerMock('./hooks', {
         afterTarball: function(info, callback, callback2) {
@@ -35,7 +30,7 @@ var setupMocks = function() {
         },
         tarball: function(info, callback, success) {
             info.tarballCalled = true;
-            info.tarballPathCorrect = info.tarball === path.join(__dirname, info.path);
+            info.tarballPathCorrect = info.tarball === info.path;
             success();
         },
         indexJson: function(info, callback, success) {
@@ -54,7 +49,6 @@ var setupMocks = function() {
     mockery.registerMock('mkdirp', function(dir, callback) {
         callback();
     });
-    mockery.registerMock('fs', fsMock);
     mockery.registerMock('davlog', {
         init: noop,
         info: noop,
@@ -80,8 +74,7 @@ var tests = {
         },
         'an object': function(d) {
             assert.isObject(d);
-        },
-        'with methods': function(d) {
+        }, 'with methods': function(d) {
             ['saveJSON', 'saveTarballs'].forEach(function(name) {
                 assert.isFunction(d[name]);
             });
@@ -104,8 +97,8 @@ var tests = {
             });
         },
         'sets tarball property': function(d) {
-            assert.equal(d[0].tarball, path.join(__dirname, 'foopath0.tgz'));
-            assert.equal(d[1].tarball, path.join(__dirname, 'foopath1.tgz'));
+            assert.equal(d[0].tarball, 'foopath0.tgz');
+            assert.equal(d[1].tarball, 'foopath1.tgz');
         },
         'tarball hook called, with correct tarball path': function(d) {
             assert(d[0].tarballCalled);
@@ -161,11 +154,11 @@ var tests = {
             });
         },
         'saves 3 json files': function(d) {
-            assert.deepEqual(fsMock.written, [
-                [__dirname+'/foopackage/index.json', '{\n    "name": "foopackage"\n}\n'],
-                [__dirname+'/foopackage/1.0.0/index.json', '{\n    "name": "foopackage"\n}\n'],
-                [__dirname+'/foopackage/2.0.0/index.json', '{\n    "name": "foopackage"\n}\n']
-            ]);
+            assert.deepEqual(memblob.data, {
+                'foopackage/index.json': '{\n    "name": "foopackage"\n}\n',
+                'foopackage/1.0.0/index.json': '{\n    "name": "foopackage"\n}\n',
+                'foopackage/2.0.0/index.json': '{\n    "name": "foopackage"\n}\n'
+            });
         },
         'indexJson hook called': function(d) {
             assert(d.indexJsonCalled);
@@ -176,7 +169,7 @@ var tests = {
         },
         'early exit (no top level name)': {
             topic: function() {
-                fsMock.written = [];
+                memblob.data = {};
                 var info = {
                     json: {}
                 };
@@ -186,13 +179,13 @@ var tests = {
                 });
             },
             'no hooks called, no files saved': function(d){
-                assert.deepEqual(fsMock.written, []);
+                assert.deepEqual(memblob.data, {});
                 assert(!d.indexJsonCalled);
             }
         },
         'early exit (error)': {
             topic: function() {
-                fsMock.written = [];
+                memblob.data = {};
                 var info = {
                     json: {
                         name: 'foo',
@@ -205,14 +198,14 @@ var tests = {
                 });
             },
             'no hooks called, no files saved, err returned': function(d){
-                assert.deepEqual(fsMock.written, []);
+                assert.deepEqual(memblob.data, {});
                 assert(!d.info.indexJsonCalled);
                 assert.equal(d.err, 'anError');
             }
         },
         'early exit (putAllParts)': {
             topic: function() {
-                fsMock.written = [];
+                memblob.data = {};
                 var info = {
                     json: {name: 'foopackage'},
                     makeError: true
@@ -223,14 +216,14 @@ var tests = {
                 });
             },
             'err returned in putAllParts': function(d){
-                assert.deepEqual(fsMock.written, []);
+                assert.deepEqual(memblob.data, []);
                 assert(d.info.indexJsonCalled);
                 assert.equal(d.err, testError);
             }
         },
         'early exit (putPart)': {
             topic: function() {
-                fsMock.written = [];
+                memblob.data = {};
                 var info = {
                     json: {name: 'foopackage'},
                     versions: [
@@ -243,16 +236,14 @@ var tests = {
                 });
             },
             'returned in puAllParts, indexJson written': function(d){
-                assert.deepEqual(fsMock.written[0],
-                    [__dirname+'/foopackage/index.json', '{\n    "name": "foopackage"\n}\n']
-                );
+                assert.deepEqual(memblob.data, {'foopackage/index.json': '{\n    "name": "foopackage"\n}\n'});
                 assert(d.indexJsonCalled);
                 // no actual error here to test
             }
         },
         'early exit (no versions)': {
             topic: function() {
-                fsMock.written = [];
+                memblob.data = {};
                 var info = {
                     json: {name: 'foopackage'}
                 };
@@ -262,9 +253,7 @@ var tests = {
                 });
             },
             'returned before putAllParts, indexJson written': function(d){
-                assert.deepEqual(fsMock.written[0],
-                    [__dirname+'/foopackage/index.json', '{\n    "name": "foopackage"\n}\n']
-                );
+                assert.deepEqual(memblob.data, {'foopackage/index.json': '{\n    "name": "foopackage"\n}\n'});
                 assert(d.indexJsonCalled);
                 // no actual error here to test
             }
