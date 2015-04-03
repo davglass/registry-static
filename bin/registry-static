@@ -30,6 +30,14 @@ if (options.sync) {
 if (options.check) {
     return require('../lib/check.js').run();
 }
+if (options.one) {
+    return require('../lib/one')(options.one, function(err){
+        if (err) {
+            log.err(err);
+            process.exit(1);
+        }
+    });
+}
 if (options.replport) {
     require('../lib/repl')();
 }
