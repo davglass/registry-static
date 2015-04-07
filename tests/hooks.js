@@ -6,6 +6,8 @@ var vows = require('vows'),
 var options = {hooks:{}};
 var davlog = {};
 var hookNames = [
+    'beforeAll',
+    'afterAll',
     'tarball',
     'afterTarball',
     'versionJson',
