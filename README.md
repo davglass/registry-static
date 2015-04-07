@@ -161,11 +161,13 @@ the `callback`.
 
 Here are the currently provided hooks:
 
+* **`beforeAll`**: Called before any data is written, at the beginning of processing a change. If the callback is called with an error or `false`, no more processing will be done for this change, and no files will be written.
+* **`afterAll`**: Called after all the data is written, at the end of processing a change. If there is no error, the callback parameters are ignored.
 * **`globalIndexJson`**: Called before writing an update to the top-level `index.json`.
 * **`indexJson`**: Called before writing a package's main `index.json`.
 * **`versionJson`**: Called before writing the `index.json` for a particular package version.
 * **`tarball`**: Called before downloading/verifying/writing a package tarball.
-* **`afterTarball`**: Called after downloading/verifying/writing a package tarball. Note that the second callback parameter is ignored for this one.
+* **`afterTarball`**: Called after downloading/verifying/writing a package tarball. If there is no error, the callback parameters are ignored.
 
 Some examples are included in the `examples` directory.
 
