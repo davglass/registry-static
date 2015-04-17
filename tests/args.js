@@ -7,6 +7,9 @@ mockery.registerMock('davlog', {
     err: function() {
     }
 });
+mockery.registerMock('fs-blob-store', function(x){
+    return x;
+});
 
 mockery.enable({
     useCleanCache: true,

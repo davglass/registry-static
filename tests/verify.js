@@ -9,27 +9,17 @@ var vows = require('vows'),
 
 function noop () {}
 
+var memblob = require('abstract-blob-store')();
+
 function setupMocks(log, badRegistry) {
     log = log || [];
+    memblob.data = {'existing.tgz': 'asdf'};
     mockery.resetCache();
-    mockery.registerMock('fs', {
-        exists: function(file, callback) {
-            callback(/existing.tgz/.test(file));
-        },
-        createReadStream: function(file) {
-            return createReadStream(__filename);
-        },
-        createWriteStream: function(file) {
-            return createWriteStream('/dev/null');
-        },
-        mkdir: function () {
-            arguments[arguments.length-1]();
-        }
-    });
     mockery.registerMock('./args', {
         get registry() {
             return badRegistry ? 'http://fhgidygfi' : 'http://registry.npmjs.org';
-        }
+        },
+        blobstore: memblob
     });
     mockery.registerMock('davlog', {
         init: noop,
@@ -170,8 +160,9 @@ var tests = {
                 var info = {
                     path: '/the/path/1',
                     tarball: 'existing.tgz',
-                    shasum: thisFileHash
+                    shasum: '3da541559918a808c2402bba5012f6c60b27661c'
                 };
+                var cb = this.callback;
                 verify.verify(info, this.callback);
             },
             'and doen\'t call update': function(d) {
@@ -233,7 +224,7 @@ var tests = {
                 assert(d.info.updateCalled);
                 assert.deepEqual(d.log, [
                         ' [0] shasum check failed for /the/path/4',
-                        ' [0] found ' + thisFileHash + ' expected badHash'
+                        ' [0] found 3da541559918a808c2402bba5012f6c60b27661c expected badHash'
                 ]);
             }
         },

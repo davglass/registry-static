@@ -1,5 +1,7 @@
 var vows = require('vows'),
     assert = require('assert'),
+    fs = require('fs'),
+    path = require('path'),
     mockery = require('mockery');
 
 var noop = function() { return ''; };
@@ -8,7 +10,8 @@ var CLEAN = false;
 var CONF;
 var SINCE;
 var WRITE;
-var EXISTS;
+
+var memblob = require('abstract-blob-store')();
 
 var setupMocks = function() {
     mockery.registerMock('./args', {
@@ -19,42 +22,11 @@ var setupMocks = function() {
         },
         get clean() {
             return CLEAN;
-        }
-    });
-    mockery.registerMock('fs', {
-        readFileSync: noop,
-        readFile: function(f, t, callback) {
-            callback(null, '{}');
         },
-        writeFile: function(f, d, t, callback) {
-            WRITE = d;
-            callback();
-        },
-        unlink: function(file, callback) {
-            called['fs.unlink'] = called['fs.unlink'] || 0;
-            called['fs.unlink']++;
-            callback();
-        },
-        exists: function(f, callback) {
-            callback(EXISTS);
-        },
-        createWriteStream: function() {
-            called.createWriteStream = called.createWriteStream || 0;
-            called.createWriteStream++;
-        },
-        createReadStream: function() {
-            called.createReadStream = called.createReadStream || 0;
-            called.createReadStream++;
-            return {
-                pipe: noop,
-                on: function(name, callback) {
-                    callback();
-                    return {
-                        pipe: noop
-                    };
-                }
-            };
-        }
+        blobstore: memblob,
+        seqFile: 'seqfile',
+        error: path.resolve('./defaults/404.json'),
+        index: path.resolve('./defaults/index.json')
     });
     mockery.registerMock('follow-registry', function(conf) {
         called.follow = called.follow || 0;
@@ -138,19 +110,36 @@ var tests = {
     },
     'clean method': {
         topic: function() {
-            index.clean(this.callback);
+            var unlinked;
+            fs.unlink = function(x, cb){
+                unlinked = x;
+                cb();
+            };
+            var self = this;
+            index.clean(function(err){
+                self.callback(err, unlinked);
+            });
         },
         'should do nothing without config': function(d) {
-            assert.equal(called['fs.unlink'], undefined);
+            assert(!d);
         },
         'with options': {
             topic: function() {
+                fs.oldUnlink = fs.unlink;
+                var unlinked;
+                fs.unlink = function(x, cb){
+                    unlinked = x;
+                    cb();
+                };
+                var self = this;
                 CLEAN = true;
-                index.clean(this.callback);
-                CLEAN = false;
+                index.clean(function(err){
+                    CLEAN = false;
+                    self.callback(err, unlinked);
+                });
             },
             'should unlink file': function(d) {
-                assert.equal(called['fs.unlink'], 1);
+                assert.equal(d, 'seqfile');
             },
         }
     },
@@ -190,7 +179,9 @@ var tests = {
                     name: 'foo'
                 }
             }, function() {
-                self.callback(null, JSON.parse(WRITE));
+                var result = JSON.parse(memblob.data['index.json']);
+                memblob.data = {};
+                self.callback(null, result);
             });
         },
         'should do its thing': function(d) {
@@ -200,23 +191,33 @@ var tests = {
     },
     'defaults method': {
         topic: function() {
-            index.defaults(this.callback);
+            var skipped = [];
+            var opts = {
+                blobstore: require('abstract-blob-store')(),
+                error: path.resolve('./defaults/404.json'),
+                index: path.resolve('./defaults/index.json')
+            };
+            var self = this;
+            index.defaults(opts, function(err, data){
+                if (err) {
+                    return self.callback(err);
+                }
+                skipped.push(data);
+                opts.blobstore.data = {'index.json': 'asdf'};
+                index.defaults(opts, function(err, data){
+                    if (err) {
+                        return self.callback(err);
+                    }
+                    skipped.push(data);
+                    self.callback(null, {skipped:skipped, blobstore: opts.blobstore});
+                });
+            });
         },
-        'should do its thing': function(d) {
-            assert.equal(called.mkdirp, 1);
-            assert.equal(called.createWriteStream, 2);
-            assert.equal(called.createReadStream, 2);
+        'should do its thing (no index)': function(d) {
+            assert(d.skipped[0]); // not skipped
         },
-        'defaults method with index': {
-            topic: function() {
-                EXISTS = true;
-                index.defaults(this.callback);
-            },
-            'should do its thing': function(d) {
-                assert.equal(called.mkdirp, 2);
-                assert.equal(called.createWriteStream, 3);
-                assert.equal(called.createReadStream, 3);
-            }
+        'should do its thing (index)': function(d) {
+            assert(!d.skipped[1]); // skipped
         }
     },
     'change method': {
@@ -229,7 +230,7 @@ var tests = {
                 },
                 versions: ['']
             }, function() {
-                self.callback(null, JSON.parse(WRITE));
+                self.callback(null, JSON.parse(memblob.data['index.json']));
             });
         },
         'should do its thing': function(d) {

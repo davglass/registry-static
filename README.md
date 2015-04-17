@@ -171,6 +171,14 @@ Here are the currently provided hooks:
 
 Some examples are included in the `examples` directory.
 
+BLOB-STORES
+-----------
+
+By default, `registry-static` uses `fs-blob-store`, meaning all the metadata and tarballs are stored
+on disk, wherever you've decided to with the `--dir` option. Alternatively, you can use a custom
+blob store, as long as it implements the [abstract-blob-store](https://github.com/maxogden/abstract-blob-store)
+spec. Just create a file that exports the blob store you want, and then pass that in to the `--blobstore` option.
+
 LOGGING
 -------
 
