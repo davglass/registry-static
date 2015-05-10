@@ -26,7 +26,7 @@ with the url provided with `-d` (so the downloads resolve locally).
 This module also uses the sequence file, so you can kill it and it should
 restart from where it left off.
 
-_WARNING: This may take quite a while to complete and a large amount of disk space (more than 117GB at last check)_
+_WARNING: This may take quite a while to complete and a large amount of disk space (more than 283GB at last check)_
 
 DIRECTORY STRUCTURE
 -------------------
