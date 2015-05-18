@@ -12,7 +12,8 @@ var hookNames = [
     'afterTarball',
     'versionJson',
     'indexJson',
-    'globalIndexJson'
+    'globalIndexJson',
+    'startup'
 ];
 var testError = new Error();
 
