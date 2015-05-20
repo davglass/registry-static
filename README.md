@@ -168,6 +168,7 @@ Here are the currently provided hooks:
 * **`versionJson`**: Called before writing the `index.json` for a particular package version.
 * **`tarball`**: Called before downloading/verifying/writing a package tarball.
 * **`afterTarball`**: Called after downloading/verifying/writing a package tarball. If there is no error, the callback parameters are ignored.
+* **`startup`**: Called in parent process before spawning the child (worker) process.
 
 Some examples are included in the `examples` directory.
 

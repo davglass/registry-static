@@ -9,6 +9,7 @@ var argv = process.argv.slice(2);
 var path = require('path');
 var mkdirp = require('mkdirp');
 var options = require('../lib/args');
+var hooks = require('../lib/hooks');
 var fs = require('fs');
 var strip = require('strip-ansi');
 
@@ -107,54 +108,68 @@ var run = function(c) {
         log.info('\n\n--------------------------------');
         log.info('spawn cap', options.spawn, 'hit, bailing..');
         log.info('--------------------------------\n\n');
-        process.exit(1);
-    }
-    process.env.PROC_SPAWN = proc;
-    process.env.PARENT_PID = process.pid;
-    child = exec(process.execPath, argv, {
-        cwd: process.cwd(),
-        env: process.env,
-        stdio: [process.stdin, 'pipe', 'pipe']
-    });
-    var a = [];
-    var sinceAdded, lastWasLog;
-    argv.forEach(function(item) {
-        if (lastWasLog) {
-            lastWasLog = false;
-            return;
-        }
-        switch (item) {
-            case '--log':
-                lastWasLog = true;
-                break;
-            case '--clean':
-                break;
-            case '--since':
-                sinceAdded = true;
-                break;
-            default:
-                if (sinceAdded) {
-                    sinceAdded = null;
-                    break;
-                }
-                a.push(item);
-                break;
-        }
-    });
-    argv = a;
-
-    child.on('close', function(code) {
-        if (code >= 250) {
-            //Internal error..
+        process.nextTick(function(){ // allow log to catch up
             process.exit(1);
-        }
+        });
+    }
+    hooks.startup({
+        spawnCount: proc,
+        exitCode: c
+    }, function(){
         log.info('\n\n--------------------------------');
-        log.info('subprocess exited with code', code, 'restarting process..');
+        log.info('spawn blocked by "startup" hook, bailing...');
         log.info('--------------------------------\n\n');
-        run(code);
-    });
+        process.nextTick(function(){ // allow log to catch up
+            process.exit(1);
+        });
+    }, function () {
+        process.env.PROC_SPAWN = proc;
+        process.env.PARENT_PID = process.pid;
+        child = exec(process.execPath, argv, {
+            cwd: process.cwd(),
+            env: process.env,
+            stdio: [process.stdin, 'pipe', 'pipe']
+        });
+        var a = [];
+        var sinceAdded, lastWasLog;
+        argv.forEach(function(item) {
+            if (lastWasLog) {
+                lastWasLog = false;
+                return;
+            }
+            switch (item) {
+                case '--log':
+                    lastWasLog = true;
+                    break;
+                case '--clean':
+                    break;
+                case '--since':
+                    sinceAdded = true;
+                    break;
+                default:
+                    if (sinceAdded) {
+                        sinceAdded = null;
+                        break;
+                    }
+                    a.push(item);
+                    break;
+            }
+        });
+        argv = a;
 
-    child.stdout.pipe(logger.writer);
+        child.on('close', function(code) {
+            if (code >= 250) {
+                //Internal error..
+                process.exit(1);
+            }
+            log.info('\n\n--------------------------------');
+            log.info('subprocess exited with code', code, 'restarting process..');
+            log.info('--------------------------------\n\n');
+            run(code);
+        });
+
+        child.stdout.pipe(logger.writer);
+    });
 };
 
 //Start the script in a child process, restarting on error..
