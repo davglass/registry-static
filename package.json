@@ -1,6 +1,6 @@
 {
   "name": "registry-static",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "create a static, flat file based npm registry",
   "bin": {
     "registry-static": "./bin/registry-static"
