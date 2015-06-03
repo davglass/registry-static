@@ -12,7 +12,7 @@
     "davlog": "~0.1.0",
     "dnscache": "~0.0.3",
     "event-stream": "^3.1.5",
-    "follow-registry": "~0.0.3",
+    "follow-registry": "^1.0.0",
     "fs-blob-store": "^5.1.1",
     "graceful-fs": "^2.0.3",
     "http-https": "^1.0.0",
