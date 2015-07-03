@@ -14,13 +14,13 @@ var goodBody = {
     versions: {
         '1': {
             dist: {
-                tarball: 'https://registry.npmjs.org/foo/1.tgz',
+                tarball: 'http://example.com/foo/1.tgz',
                 shasum: '123abc'
             }
         },
         '2': {
             dist: {
-                tarball: 'https://registry.npmjs.org/foo/2.tgz',
+                tarball: 'http://example.com/foo/2.tgz',
                 shasum: '456def'
             }
         }
@@ -33,13 +33,13 @@ var goodBodyNoTags = {
     versions: {
         '1': {
             dist: {
-                tarball: 'https://registry.npmjs.org/foo/1.tgz',
+                tarball: 'http://example.com/foo/1.tgz',
                 shasum: '123abc'
             }
         },
         '2': {
             dist: {
-                tarball: 'https://registry.npmjs.org/foo/2.tgz',
+                tarball: 'http://example.com/foo/2.tgz',
                 shasum: '456def'
             }
         }
@@ -72,6 +72,9 @@ var tests = {
                 cb();
             }
         });
+        mockery.registerMock('./args', {
+            domain: 'example.com'
+        });
         mockery.enable({
             useCleanCache: true,
             warnOnReplace: false,
@@ -97,8 +100,8 @@ var tests = {
         },
         'saves tarballs': function(d){
             assert.deepEqual(d[0], [
-                {path: '/foo/1.tgz', tarball: 'https://registry.npmjs.org/foo/1.tgz', shasum: '123abc'},
-                {path: '/foo/2.tgz', tarball: 'https://registry.npmjs.org/foo/2.tgz', shasum: '456def'}
+                {path: '/foo/1.tgz', tarball: 'http://example.com/foo/1.tgz', shasum: '123abc'},
+                {path: '/foo/2.tgz', tarball: 'http://example.com/foo/2.tgz', shasum: '456def'}
             ]);
         },
         'saves json': function(d){
@@ -111,8 +114,8 @@ var tests = {
                     {version: '2', json: goodBody.versions['2']}
                 ],
                 tarballs: [
-                    {path: '/foo/1.tgz', tarball: 'https://registry.npmjs.org/foo/1.tgz', shasum: '123abc'},
-                    {path: '/foo/2.tgz', tarball: 'https://registry.npmjs.org/foo/2.tgz', shasum: '456def'}
+                    {path: '/foo/1.tgz', tarball: 'http://example.com/foo/1.tgz', shasum: '123abc'},
+                    {path: '/foo/2.tgz', tarball: 'http://example.com/foo/2.tgz', shasum: '456def'}
                 ]
             });
         }
@@ -127,8 +130,8 @@ var tests = {
         },
         'saves tarballs': function(d){
             assert.deepEqual(d[0], [
-                {path: '/foo/1.tgz', tarball: 'https://registry.npmjs.org/foo/1.tgz', shasum: '123abc'},
-                {path: '/foo/2.tgz', tarball: 'https://registry.npmjs.org/foo/2.tgz', shasum: '456def'}
+                {path: '/foo/1.tgz', tarball: 'http://example.com/foo/1.tgz', shasum: '123abc'},
+                {path: '/foo/2.tgz', tarball: 'http://example.com/foo/2.tgz', shasum: '456def'}
             ]);
         },
         'saves json': function(d){
@@ -139,8 +142,8 @@ var tests = {
                     {version: '2', json: goodBodyNoTags.versions['2']}
                 ],
                 tarballs: [
-                    {path: '/foo/1.tgz', tarball: 'https://registry.npmjs.org/foo/1.tgz', shasum: '123abc'},
-                    {path: '/foo/2.tgz', tarball: 'https://registry.npmjs.org/foo/2.tgz', shasum: '456def'}
+                    {path: '/foo/1.tgz', tarball: 'http://example.com/foo/1.tgz', shasum: '123abc'},
+                    {path: '/foo/2.tgz', tarball: 'http://example.com/foo/2.tgz', shasum: '456def'}
                 ]
             });
         }
