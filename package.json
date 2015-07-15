@@ -9,7 +9,7 @@
   "main": "./lib/index.js",
   "dependencies": {
     "async": "~0.8.0",
-    "davlog": "~0.1.0",
+    "davlog": "~0.1.2",
     "dnscache": "~0.0.3",
     "event-stream": "^3.1.5",
     "follow-registry": "^1.0.0",
