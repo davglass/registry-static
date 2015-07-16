@@ -23,8 +23,6 @@ logger();
 
 var log = require('davlog');
 
-var pidFile = path.join(options.tmp, 'registry-static.pid');
-
 if (options.sync) {
     return require('../lib/sync')(options);
 }
@@ -43,134 +41,8 @@ if (options.replport) {
     require('../lib/repl')();
 }
 
-if (options.restart) {
-    var pid = fs.readFileSync(pidFile, 'utf8');
-    log.info('\n\n--------------------------------');
-    log.info('Restarting process', pid);
-    log.info('--------------------------------\n\n');
-    process.kill(pid, 'SIGHUP');
-    return;
-}
-
-var child;
-
-process.on('SIGPIPE', function() {
-    //pass SIGPIPE to the child for log rotation
-    process.kill(child.pid, 'SIGPIPE');
+hooks.startup({}, function(){}, function(){
+    require('../lib/index').start();
 });
 
-process.on('SIGINT', function() {
-    log.info('Cleaning up pidfile');
-    fs.unlinkSync(pidFile);
-    process.exit();
-});
 
-try {
-    // Check if PID the PID file points to is still alive.
-    // If this throws, the file doesn't exist and we're fine.
-    var pid = parseInt(fs.readFileSync(pidFile, 'utf8'), 10);
-
-    // If this throws, the process doesn't exist.
-    process.kill(pid, 0);
-
-    // We're here because neither `fs.readFileSync` nor `process.kill` threw.
-    // We have a PID file pointing to an alive process. Bail out.
-    console.error('\n\n--------------------------------');
-    console.error('Found a pid file, process with PID ' + pid + ' is still running');
-    console.error(pidFile);
-    console.error('--------------------------------\n\n');
-    process.exit(1);
-}
-catch (er) {
-}
-
-process.on('SIGHUP', function() {
-    log.info('\n\n--------------------------------');
-    log.info('SIGHUP received, restarting child process (' + child.pid + ')');
-    log.info('--------------------------------\n\n');
-    child.stdout.unpipe(logger.writer);
-    process.kill(child.pid, 'SIGKILL');
-});
-
-fs.writeFileSync(pidFile, process.pid, 'utf8');
-
-argv.unshift(path.join(__dirname, '../lib/background.js'));
-log.info('\n\n--------------------------------');
-log.info('starting background task..');
-log.info('--------------------------------\n\n');
-var proc = 0;
-var run = function(c) {
-    if (c) {
-        //Only count the respawn if there is an exit code
-        proc++;
-    }
-    if (proc >= options.spawn) {
-        log.info('\n\n--------------------------------');
-        log.info('spawn cap', options.spawn, 'hit, bailing..');
-        log.info('--------------------------------\n\n');
-        process.nextTick(function(){ // allow log to catch up
-            process.exit(1);
-        });
-    }
-    hooks.startup({
-        spawnCount: proc,
-        exitCode: c
-    }, function(){
-        log.info('\n\n--------------------------------');
-        log.info('spawn blocked by "startup" hook, bailing...');
-        log.info('--------------------------------\n\n');
-        process.nextTick(function(){ // allow log to catch up
-            process.exit(1);
-        });
-    }, function () {
-        process.env.PROC_SPAWN = proc;
-        process.env.PARENT_PID = process.pid;
-        child = exec(process.execPath, argv, {
-            cwd: process.cwd(),
-            env: process.env,
-            stdio: [process.stdin, 'pipe', 'pipe']
-        });
-        var a = [];
-        var sinceAdded, lastWasLog;
-        argv.forEach(function(item) {
-            if (lastWasLog) {
-                lastWasLog = false;
-                return;
-            }
-            switch (item) {
-                case '--log':
-                    lastWasLog = true;
-                    break;
-                case '--clean':
-                    break;
-                case '--since':
-                    sinceAdded = true;
-                    break;
-                default:
-                    if (sinceAdded) {
-                        sinceAdded = null;
-                        break;
-                    }
-                    a.push(item);
-                    break;
-            }
-        });
-        argv = a;
-
-        child.on('close', function(code) {
-            if (code >= 250) {
-                //Internal error..
-                process.exit(1);
-            }
-            log.info('\n\n--------------------------------');
-            log.info('subprocess exited with code', code, 'restarting process..');
-            log.info('--------------------------------\n\n');
-            run(code);
-        });
-
-        child.stdout.pipe(logger.writer);
-    });
-};
-
-//Start the script in a child process, restarting on error..
-run();
