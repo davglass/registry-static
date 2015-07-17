@@ -46,7 +46,7 @@ var tests = {
         },
         'and error': function(d) {
             assert.ok(d);
-            assert.equal(d, 250);
+            assert.equal(d, 1);
         }
     },
     'process valid args': {

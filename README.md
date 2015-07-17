@@ -113,15 +113,6 @@ up to 4 times. If it fails all of those, it is skipped and not stored locally.
 Each `change` request will process the entire module, not just the change alone. This is to make sure that tags
 and new versions are all in sync.
 
-AUTOMATION
-----------
-
-The main process always writes a `pid` file: `$TMPDIR/registry-static.pid`
-If you use the `--restart` option, it will send a `SIGHUP` to the registered process found in the `pid` file. 
-It will then restart the child process.
-
-This way you can add a crontab entry to force a restart so you don't have to monitor the process all the time.
-
 HOOKS
 -----
 
@@ -168,7 +159,7 @@ Here are the currently provided hooks:
 * **`versionJson`**: Called before writing the `index.json` for a particular package version.
 * **`tarball`**: Called before downloading/verifying/writing a package tarball.
 * **`afterTarball`**: Called after downloading/verifying/writing a package tarball. If there is no error, the callback parameters are ignored.
-* **`startup`**: Called in parent process before spawning the child (worker) process.
+* **`startup`**: Called before doing anything else at start time.
 
 Some examples are included in the `examples` directory.
 
@@ -185,12 +176,12 @@ LOGGING
 
 Supports `--log <path>` to log all output to a specific file.
 
-When doing this, you may want to rotate your logs. You can do this by sending the main 
+When doing this, you may want to rotate your logs. You can do this by sending the 
 process a `SIGPIPE` signal. This will free up the file descriptor and then reattach it to the file.
 
-If you are using logrotate.d, here is a sample command:
+If you are using logrotate.d, configure your process monitor to start `registry-static` like this:
 
-`registry-static -d my.registry.com -o /var/www/ --tmp /tmp/ --log /var/log/registry-static/output.log`
+`registry-static -d my.registry.com -o /var/www/ --log /var/log/registry-static/output.log`
 
 
 and the logrotate config file (/etc/logrotate.d/registry-static):
@@ -208,6 +199,7 @@ and the logrotate config file (/etc/logrotate.d/registry-static):
             endscript
     }
 
+(This assumes that your process monitor stores the pid in `/tmp/registry-static.pid`.)
 
 CAVEATS
 -------
