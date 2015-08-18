@@ -31,13 +31,13 @@
     "istanbul": "~0.3.5",
     "jshint": "^2.5.1",
     "marked-man": "^0.1.4",
-    "mockery": "^1.4.0",
-    "vows": "~0.8.1"
+    "mocha": "^2.2.5",
+    "mockery": "^1.4.0"
   },
   "scripts": {
     "prepublish": "mkdirp man && marked-man README.md > man/registry-static.1",
     "pretest": "jshint ./bin/* ./lib/* ./tests/*",
-    "test": "istanbul cover --print both -- vows --spec ./tests/*.js"
+    "test": "istanbul cover --print both -- _mocha tests"
   },
   "repository": {
     "type": "git",

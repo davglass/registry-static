@@ -1,5 +1,4 @@
-var vows = require('vows'),
-    assert = require('assert'),
+var assert = require('assert'),
     mockery = require('mockery');
 
 var getResponse;
@@ -53,8 +52,8 @@ var goodBodyNoVersions = {
 
 var savedTarballs, savedJSON, one;
 
-var tests = {
-    setup: function(){
+describe('one', function(){
+    before(function(done){
         mockery.registerMock('request', {
             get: function(url, opts, cb){
                 assert.equal(url, 'https://registry.npmjs.org/foo');
@@ -81,31 +80,22 @@ var tests = {
             warnOnUnregistered: false
         });
         one = require('../lib/one');
-    },
-    'should export': {
-        topic: function(){
-            return one;
-        },
-        'a function': function(d){
-            assert.isFunction(d);
-        }
-    },
-    'with a package name': {
-        topic: function(){
-            var cb = this.callback;
-            getResponse = [null, {statusCode: 200}, goodBody];
-            one('foo', function(){
-                cb(null, [savedTarballs, savedJSON]);
-            });
-        },
-        'saves tarballs': function(d){
-            assert.deepEqual(d[0], [
+        done();
+    });
+    it('should export a function', function(done){
+        assert.equal(typeof one, 'function');
+        done();
+    });
+    it('with a package name saves tarballs and json', function(done) {
+        getResponse = [null, {statusCode: 200}, goodBody];
+        one('foo', function(){
+
+            assert.deepEqual(savedTarballs, [
                 {path: '/foo/1.tgz', tarball: 'http://example.com/foo/1.tgz', shasum: '123abc'},
                 {path: '/foo/2.tgz', tarball: 'http://example.com/foo/2.tgz', shasum: '456def'}
             ]);
-        },
-        'saves json': function(d){
-            assert.deepEqual(d[1], {
+
+            assert.deepEqual(savedJSON, {
                 json: goodBody,
                 versions: [
                     {version: 'latest', json: goodBody.versions['1']},
@@ -118,24 +108,17 @@ var tests = {
                     {path: '/foo/2.tgz', tarball: 'http://example.com/foo/2.tgz', shasum: '456def'}
                 ]
             });
-        }
-    },
-    'with no dist-tags': {
-        topic: function(){
-            var cb = this.callback;
-            getResponse = [null, {statusCode: 200}, goodBodyNoTags];
-            one('foo', function(){
-                cb(null, [savedTarballs, savedJSON]);
-            });
-        },
-        'saves tarballs': function(d){
-            assert.deepEqual(d[0], [
+            done();
+        });
+    });
+    it('with no dist-tags saves tarballs and json', function(done){
+        getResponse = [null, {statusCode: 200}, goodBodyNoTags];
+        one('foo', function(){
+            assert.deepEqual(savedTarballs, [
                 {path: '/foo/1.tgz', tarball: 'http://example.com/foo/1.tgz', shasum: '123abc'},
                 {path: '/foo/2.tgz', tarball: 'http://example.com/foo/2.tgz', shasum: '456def'}
             ]);
-        },
-        'saves json': function(d){
-            assert.deepEqual(d[1], {
+            assert.deepEqual(savedJSON, {
                 json: goodBodyNoTags,
                 versions: [
                     {version: '1', json: goodBodyNoTags.versions['1']},
@@ -146,55 +129,33 @@ var tests = {
                     {path: '/foo/2.tgz', tarball: 'http://example.com/foo/2.tgz', shasum: '456def'}
                 ]
             });
-        }
-    },
-    'with no versions': {
-        topic: function(){
-            var cb = this.callback;
-            getResponse = [null, {statusCode: 200}, goodBodyNoVersions];
-            one('foo', function(){
-                cb(null, [savedTarballs, savedJSON]);
-            });
-        },
-        'saves tarballs': function(d){
-            assert.deepEqual(d[0], []);
-        },
-        'saves json': function(d){
-            assert.deepEqual(d[1], {
+            done();
+        });
+    });
+    it('with no versions saves tarballs and json', function(done){
+        getResponse = [null, {statusCode: 200}, goodBodyNoVersions];
+        one('foo', function(){
+            assert.deepEqual(savedTarballs, []);
+            assert.deepEqual(savedJSON, {
                 json: goodBodyNoVersions,
                 versions: [],
                 tarballs: []
             });
-        }
-    },
-    'bad request (err)': {
-        topic: function(){
-            var cb = this.callback;
-            getResponse = [new Error('fake error')];
-            one('foo', function(err){
-                cb(null, err);
-            });
-        },
-        'errs back': function(d){
-            assert.equal(d.message, 'fake error');
-        }
-    },
-    'bad request (404)': {
-        topic: function(){
-            var cb = this.callback;
-            getResponse = [null, {statusCode: 404}];
-            one('foo', function(err){
-                cb(null, err);
-            });
-        },
-        'errs back': function(d){
-            assert.equal(d.message, 'npm responded with status code: 404');
-        }
-    },
-    teardown: function(){
-        mockery.deregisterAll();
-        mockery.disable();
-    }
-};
-
-vows.describe('one').addBatch(tests).export(module);
+            done();
+        });
+    });
+    it('bad request (err) errs back', function(done){
+        getResponse = [new Error('fake error')];
+        one('foo', function(err){
+            assert.equal(err.message, 'fake error');
+            done();
+        });
+    });
+    it('bad request (404)', function(done){
+        getResponse = [null, {statusCode: 404}];
+        one('foo', function(err){
+            assert.equal(err.message, 'npm responded with status code: 404');
+            done();
+        });
+    });
+});
