@@ -1,5 +1,4 @@
-var vows = require('vows'),
-    assert = require('assert'),
+var assert = require('assert'),
     fs = require('fs'),
     path = require('path'),
     mockery = require('mockery');
@@ -13,252 +12,229 @@ var WRITE;
 
 var memblob = require('abstract-blob-store')();
 
-var setupMocks = function() {
-    mockery.registerMock('./args', {
-        domain: 'example.com',
-        dir: __dirname,
-        get since() {
-            return SINCE;
-        },
-        get clean() {
-            return CLEAN;
-        },
-        blobstore: memblob,
-        seqFile: 'seqfile',
-        error: path.resolve('./defaults/404.json'),
-        index: path.resolve('./defaults/index.json')
-    });
-    mockery.registerMock('follow-registry', function(conf) {
-        called.follow = called.follow || 0;
-        called.follow++;
-        CONF = conf;
-    });
-    mockery.registerMock('mkdirp', function(f, callback) {
-        called.mkdirp = called.mkdirp || 0;
-        called.mkdirp++;
-        callback();
-    });
-    mockery.registerMock('http-https', {});
-    mockery.registerMock('./files.js', {
-        saveTarballs: function(d, callback) {
-            called.saveTarballs = called.saveTarballs || 0;
-            called.saveTarballs++;
-            callback();
-        },
-        saveJSON: function(d, callback) {
-            called.saveJSON = called.saveJSON || 0;
-            called.saveJSON++;
-            callback();
-        }
-    });
-    mockery.registerMock('./logger', noop);
-    mockery.registerMock('davlog', {
-        init: noop,
-        info: noop,
-        warn: noop
-    });
-};
-
 var index;
 
-var tests = {
-    setup: function() {
-        setupMocks();
+describe('index', function(){
+    before(function(done){
+        mockery.registerMock('./args', {
+            domain: 'example.com',
+            dir: __dirname,
+            get since() {
+                return SINCE;
+            },
+                get clean() {
+                    return CLEAN;
+                },
+            blobstore: memblob,
+            seqFile: 'seqfile',
+            error: path.resolve('./defaults/404.json'),
+            index: path.resolve('./defaults/index.json')
+        });
+        mockery.registerMock('follow-registry', function(conf) {
+            called.follow = called.follow || 0;
+            called.follow++;
+            CONF = conf;
+        });
+        mockery.registerMock('mkdirp', function(f, callback) {
+            called.mkdirp = called.mkdirp || 0;
+            called.mkdirp++;
+            callback();
+        });
+        mockery.registerMock('http-https', {});
+        mockery.registerMock('./files.js', {
+            saveTarballs: function(d, callback) {
+                called.saveTarballs = called.saveTarballs || 0;
+                called.saveTarballs++;
+                callback();
+            },
+            saveJSON: function(d, callback) {
+                called.saveJSON = called.saveJSON || 0;
+                called.saveJSON++;
+                callback();
+            }
+        });
+        mockery.registerMock('./hooks', {
+            globalIndexJson: function (data, cb, success) {
+                success();
+            },
+            beforeAll: function(data, cb, success) {
+                success();
+            },
+            afterAll: function(data, cb, success) {
+                success();
+            }
+        });
+        mockery.registerMock('./logger', noop);
+        mockery.registerMock('davlog', {
+            init: noop,
+            info: noop,
+            warn: noop
+        });
         mockery.enable({
             useCleanCache: true,
             warnOnReplace: false,
             warnOnUnregistered: false
         });
-    },
-    'should export': {
-        topic: function() {
+        try {
             index = require('../lib/index.js');
-            return index;
-        },
-        'an object': function(d) {
-            assert.isObject(d);
-        },
-        'with methods': function(d) {
-            ['start', 'defaults', 'change', 'run', 'clean', 'updateIndex'].forEach(function(name) {
-                assert.isFunction(d[name]);
-            });
+        } catch(e){
+            console.error(e.stack);
+            throw e;
         }
-    },
-    'start method': {
-        topic: function() {
-            var data = {},
-                hold = {};
-            ['run', 'clean', 'defaults'].forEach(function(name) {
-                hold[name] = index[name];
-                index[name] = function(callback) {
-                    data[name] = true;
-                    if (callback) { callback(); }
-                };
-            });
-            index.start();
-            Object.keys(hold).forEach(function(name) {
-                index[name] = hold[name];
-            });
-            return data;
-        },
-        'should call run, clean and defaults': function(d) {
-            assert.isObject(d);
-            assert.isTrue(d.run);
-            assert.isTrue(d.clean);
-            assert.isTrue(d.defaults);
-        }
-    },
-    'clean method': {
-        topic: function() {
-            var unlinked;
-            fs.unlink = function(x, cb){
-                unlinked = x;
-                cb();
+        done();
+    });
+
+    after(function(done){
+        mockery.deregisterAll();
+        mockery.disable();
+        done();
+    });
+
+    it('should export and object with methods', function(done){
+        assert.equal(typeof index, 'object');
+        ['start', 'defaults', 'change', 'run', 'clean', 'updateIndex'].forEach(function(name) {
+            assert.equal(typeof index[name], 'function');
+        });
+        done();
+    });
+
+    it('start method should call run, clean and defaults', function(done){
+        var data = {},
+        hold = {};
+        ['run', 'clean', 'defaults'].forEach(function(name) {
+            hold[name] = index[name];
+            index[name] = function(callback) {
+                data[name] = true;
+                if (callback) { callback(); }
             };
-            var self = this;
-            index.clean(function(err){
-                self.callback(err, unlinked);
-            });
-        },
-        'should do nothing without config': function(d) {
-            assert(!d);
-        },
-        'with options': {
-            topic: function() {
-                fs.oldUnlink = fs.unlink;
-                var unlinked;
-                fs.unlink = function(x, cb){
-                    unlinked = x;
-                    cb();
-                };
-                var self = this;
-                CLEAN = true;
-                index.clean(function(err){
-                    CLEAN = false;
-                    self.callback(err, unlinked);
-                });
-            },
-            'should unlink file': function(d) {
-                assert.equal(d, 'seqfile');
-            },
-        }
-    },
-    'run method': {
-        topic: function() {
-            index.setTimer = noop;
-            index.run();
-            return null;
-        },
-        'should execute': function(d) {
-            assert.equal(called.follow, 1);
-            assert.ok(CONF);
-            assert.isFunction(CONF.handler);
-            CONF = undefined;
-        },
-        'run method with since': {
-            topic: function() {
-                SINCE = 12345;
-                index.setTimer = noop;
-                index.run();
-                return null;
-            },
-            'should execute': function(d) {
-                assert.equal(called.follow, 2);
-                assert.ok(CONF);
-                assert.isFunction(CONF.handler);
-                assert.equal(CONF.since, 12345);
-                CONF = undefined;
+        });
+        index.start();
+        Object.keys(hold).forEach(function(name) {
+            index[name] = hold[name];
+        });
+        assert.equal(typeof data, 'object');
+        assert(data.run);
+        assert(data.clean);
+        assert(data.defaults);
+        done();
+    });
+
+    it('clean method should do nothing without config', function(done){
+        var unlinked;
+        fs.unlink = function(x, cb){
+            unlinked = x;
+            cb();
+        };
+        index.clean(function(err){
+            assert.ifError(err);
+            assert(!unlinked);
+            done();
+        });
+    });
+
+    it('clean method with options should unlink file', function(done){
+        fs.oldUnlink = fs.unlink;
+        var unlinked;
+        fs.unlink = function(x, cb){
+            unlinked = x;
+            cb();
+        };
+        CLEAN = true;
+        index.clean(function(err){
+            assert.ifError(err);
+            CLEAN = false;
+            assert.equal(unlinked, 'seqfile');
+            done();
+        });
+    });
+
+    it('run method should execute', function(done){
+        index.setTimer = noop;
+        index.run();
+        assert.equal(called.follow, 1);
+        assert.ok(CONF);
+        assert.equal(typeof CONF.handler, 'function');
+        CONF = undefined;
+        done();
+    });
+
+    it('run method with since should execute', function(done){
+        SINCE = 12345;
+        index.setTimer = noop;
+        index.run();
+        assert.equal(called.follow, 2);
+        assert.ok(CONF);
+        assert.equal(typeof CONF.handler, 'function');
+        assert.equal(CONF.since, 12345);
+        CONF = undefined;
+        done();
+    });
+
+    it('updateIndex method should do its thing', function(done){
+        index.updateIndex({
+            json: {
+                name: 'foo'
             }
-        }
-    },
-    'updateIndex method': {
-        topic: function() {
-            var self = this;
-            index.updateIndex({
-                json: {
-                    name: 'foo'
-                }
-            }, function() {
-                var result = JSON.parse(memblob.data['index.json']);
-                memblob.data = {};
-                self.callback(null, result);
-            });
-        },
-        'should do its thing': function(d) {
-            assert.equal(d.couchdb, 'Welcome');
-            assert.equal(d.processing, 'foo');
-        }
-    },
-    'defaults method': {
-        topic: function() {
-            var skipped = [];
-            var opts = {
-                blobstore: require('abstract-blob-store')(),
-                error: path.resolve('./defaults/404.json'),
-                index: path.resolve('./defaults/index.json')
-            };
-            var self = this;
+        }, function() {
+            var result = JSON.parse(memblob.data['index.json']);
+            memblob.data = {};
+            assert.equal(result.couchdb, 'Welcome');
+            assert.equal(result.processing, 'foo');
+            done();
+        });
+    });
+
+    it('defaults method', function(done){
+        var skipped = [];
+        var opts = {
+            blobstore: require('abstract-blob-store')(),
+            error: path.resolve('./defaults/404.json'),
+            index: path.resolve('./defaults/index.json')
+        };
+        index.defaults(opts, function(err, data){
+            if (err) {
+                return done(err);
+            }
+            skipped.push(data);
+            opts.blobstore.data = {'index.json': 'asdf'};
             index.defaults(opts, function(err, data){
                 if (err) {
-                    return self.callback(err);
+                    return done(err);
                 }
                 skipped.push(data);
-                opts.blobstore.data = {'index.json': 'asdf'};
-                index.defaults(opts, function(err, data){
-                    if (err) {
-                        return self.callback(err);
-                    }
-                    skipped.push(data);
-                    self.callback(null, {skipped:skipped, blobstore: opts.blobstore});
-                });
+                assert(skipped[0]); // not skipped
+                assert(!skipped[1]); // skipped
+                done();
             });
-        },
-        'should do its thing (no index)': function(d) {
-            assert(d.skipped[0]); // not skipped
-        },
-        'should do its thing (index)': function(d) {
-            assert(!d.skipped[1]); // skipped
-        }
-    },
-    'change method': {
-        topic: function() {
-            var self = this;
-            index.change({
-                json: {
-                    name: 'bar',
-                    versions: {}
-                },
-                versions: ['']
-            }, function() {
-                self.callback(null, JSON.parse(memblob.data['index.json']));
-            });
-        },
-        'should do its thing': function(d) {
+        });
+    });
+
+    it('change method', function(done){
+        index.change({
+            json: {
+                name: 'bar',
+                versions: {}
+            },
+            versions: ['']
+        }, function() {
+            var d = JSON.parse(memblob.data['index.json']);
+
             assert.equal(d.couchdb, 'Welcome');
             assert.equal(d.processing, 'bar');
             assert.equal(called.saveTarballs, 1);
             assert.equal(called.saveJSON, 1);
-        },
-        'when bad JSON is provided': {
-            topic: function() {
-                var self = this;
-                var oldCalled = called;
-                called = {};
-                index.change({json: '<xml>not json</xml>'}, function(err){
-                    var newCalled = called;
-                    called = oldCalled;
-                    self.callback(null, newCalled);
-                });
-            },
-            'no error. callback is called (early)': function (d) {
-                assert.deepEqual({}, d);
-            }
-        }
-    },
-    teardown: function() {
-        mockery.deregisterAll();
-        mockery.disable();
-    }
-};
+            done();
+        });
+    });
 
-vows.describe('index').addBatch(tests).export(module);
+    it('change method when bad JSON is provided', function(done){
+        var oldCalled = called;
+        called = {};
+        index.change({json: '<xml>not json</xml>'}, function(err){
+            var newCalled = called;
+            called = oldCalled;
+            assert.deepEqual({}, newCalled);
+            done();
+        });
+    });
+});

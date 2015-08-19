@@ -1,268 +1,242 @@
-var vows = require('vows'),
-    path = require('path'),
+var path = require('path'),
     assert = require('assert'),
     mockery = require('mockery');
 
 var testError = new Error();
 var memblob = require('abstract-blob-store')();
 var noop = function() { return ''; };
-var setupMocks = function() {
-    mockery.registerMock('./verify.js', {
-        verify: function(obj, callback){
-            obj.verified = true;
-            if (obj.makeError) {
-                callback(testError);
-            } else {
-                callback();
-            }
-        }
-    });
-    mockery.registerMock('./args.js', {
-        dir: __dirname,
-        limit: 2,
-        blobstore: memblob
-    });
-    mockery.registerMock('./hooks', {
-        afterTarball: function(info, callback, callback2) {
-            info.afterTarballCalled = true;
-            info.callbacksEqual = callback === callback2;
-            callback();
-        },
-        tarball: function(info, callback, success) {
-            info.tarballCalled = true;
-            info.tarballPathCorrect = info.tarball === info.path;
-            success();
-        },
-        indexJson: function(info, callback, success) {
-            info.indexJsonCalled = true;
-            if (info.makeError) {
-                callback(testError);
-            } else {
-                success();
-            }
-        },
-        versionJson: function(info, callback, success) {
-            info.versionJsonCalled = true;
-            success();
-        }
-    });
-    mockery.registerMock('mkdirp', function(dir, callback) {
-        callback();
-    });
-    mockery.registerMock('davlog', {
-        init: noop,
-        info: noop,
-        warn: noop
-    });
-};
-
 var files;
 
-var tests = {
-    setup: function() {
-        setupMocks();
+describe('files', function(){
+    before(function(done){
+        mockery.registerMock('./verify.js', {
+            verify: function(obj, callback){
+                obj.verified = true;
+                if (obj.makeError) {
+                    callback(testError);
+                } else {
+                    callback();
+                }
+            }
+        });
+        mockery.registerMock('./args.js', {
+            dir: __dirname,
+            limit: 2,
+            blobstore: memblob
+        });
+        mockery.registerMock('./hooks', {
+            afterTarball: function(info, callback, callback2) {
+                info.afterTarballCalled = true;
+                info.callbacksEqual = callback === callback2;
+                callback();
+            },
+            tarball: function(info, callback, success) {
+                info.tarballCalled = true;
+                info.tarballPathCorrect = info.tarball === info.path;
+                success();
+            },
+            indexJson: function(info, callback, success) {
+                info.indexJsonCalled = true;
+                if (info.makeError) {
+                    callback(testError);
+                } else {
+                    success();
+                }
+            },
+            versionJson: function(info, callback, success) {
+                info.versionJsonCalled = true;
+                success();
+            }
+        });
+        mockery.registerMock('mkdirp', function(dir, callback) {
+            callback();
+        });
+        mockery.registerMock('davlog', {
+            init: noop,
+            info: noop,
+            warn: noop
+        });
         mockery.enable({
             useCleanCache: true,
             warnOnReplace: false,
             warnOnUnregistered: false
         });
         files = require('../lib/files');
-    },
-    'should export': {
-        topic: function() {
-            return files;
-        },
-        'an object': function(d) {
-            assert.isObject(d);
-        }, 'with methods': function(d) {
-            ['saveJSON', 'saveTarballs'].forEach(function(name) {
-                assert.isFunction(d[name]);
-            });
-        }
-    },
-    'method saveTarballs': {
-        topic: function() {
-            var tarballs = [
-                {
-                    path: 'foopath0.tgz'
-                },
-                {
-                    path: 'foopath1.tgz'
-                }
+        done();
+    });
+
+    after(function(done){
+        mockery.disable();
+        mockery.deregisterAll();
+        done();
+    });
+
+    it('should export an object with methods', function(done){
+        assert.equal(typeof files, 'object');
+        ['saveJSON', 'saveTarballs'].forEach(function(name) {
+            assert.equal(typeof files[name], 'function');
+        });
+        done();
+    });
+
+    describe('saveTarballs', function(){
+        var tarballs;
+        before(function(done){
+            tarballs = [
+            {
+                path: 'foopath0.tgz'
+            },
+            {
+                path: 'foopath1.tgz'
+            }
             ];
             var callback = this.callback;
-            mkdirpRuns = 0;
-            files.saveTarballs(tarballs, function(err){
-                callback(err, tarballs);
-            });
-        },
-        'sets tarball property': function(d) {
-            assert.equal(d[0].tarball, 'foopath0.tgz');
-            assert.equal(d[1].tarball, 'foopath1.tgz');
-        },
-        'tarball hook called, with correct tarball path': function(d) {
-            assert(d[0].tarballCalled);
-            assert(d[0].tarballPathCorrect);
-            assert(d[1].tarballCalled);
-            assert(d[1].tarballPathCorrect);
-        },
-        'afterTarball hook called, with to of the same callback': function(d) {
-            assert(d[0].afterTarballCalled);
-            assert(d[0].callbacksEqual);
-            assert(d[1].afterTarballCalled);
-            assert(d[1].callbacksEqual);
-        },
-        'early exit': {
-            topic: function() {
-                var tarballs = [
-                    {
-                        path: 'foopath0.tgz',
-                        makeError: true
-                    }
-                ];
-                var callback = this.callback;
-                mkdirpRuns = 0;
-                files.saveTarballs(tarballs, function(err) {
-                    callback(null, err);
-                });
-            },
-            'should call back with an error': function(e) {
-                assert.strictEqual(e, testError);
+            files.saveTarballs(tarballs, done);
+        });
+
+        it('sets tarball property', function(done) {
+            assert.equal(tarballs[0].tarball, 'foopath0.tgz');
+            assert.equal(tarballs[1].tarball, 'foopath1.tgz');
+            done();
+        });
+        it('tarball hook called, with correct tarball path', function(done) {
+            assert(tarballs[0].tarballCalled);
+            assert(tarballs[0].tarballPathCorrect);
+            assert(tarballs[1].tarballCalled);
+            assert(tarballs[1].tarballPathCorrect);
+            done();
+        });
+        it('afterTarball hook called, with to of the same callback', function(done) {
+            assert(tarballs[0].afterTarballCalled);
+            assert(tarballs[0].callbacksEqual);
+            assert(tarballs[1].afterTarballCalled);
+            assert(tarballs[1].callbacksEqual);
+            done();
+        });
+        it('early exit should call back with an error', function (done) {
+            tarballs = [
+            {
+                path: 'foopath0.tgz',
+                makeError: true
             }
-        }
-    },
-    'method saveJSON': {
-        topic: function () {
-            var info = {
+            ];
+            files.saveTarballs(tarballs, function(err) {
+                assert.strictEqual(err, testError);
+                done();
+            });
+        });
+    });
+
+    describe('saveJSON', function(){
+        var info;
+        before(function(done){
+            info = {
                 json: {name: 'foopackage'},
                 seq: 97,
                 latestSeq: 42,
                 versions: [
-                    {
-                        json: {name: 'foopackage'},
-                        version: '1.0.0'
-                    },
-                    {
-                        json: {name: 'foopackage'},
-                        version: '2.0.0'
-                    }
+                {
+                    json: {name: 'foopackage'},
+                    version: '1.0.0'
+                },
+                {
+                    json: {name: 'foopackage'},
+                    version: '2.0.0'
+                }
                 ]
             };
-            var callback = this.callback;
-            files.saveJSON(info, function() {
-                callback(null, info);
-            });
-        },
-        'saves 3 json files': function(d) {
+            files.saveJSON(info, done);
+        });
+
+        it('saves 3 json files', function (done){
             assert.deepEqual(memblob.data, {
                 'foopackage/index.json': '{\n    "name": "foopackage"\n}\n',
                 'foopackage/1.0.0/index.json': '{\n    "name": "foopackage"\n}\n',
                 'foopackage/2.0.0/index.json': '{\n    "name": "foopackage"\n}\n'
             });
-        },
-        'indexJson hook called': function(d) {
-            assert(d.indexJsonCalled);
-        },
-        'versionJson hook called': function(d) {
-            assert(d.versions[0].versionJsonCalled);
-            assert(d.versions[1].versionJsonCalled);
-        },
-        'early exit (no top level name)': {
-            topic: function() {
-                memblob.data = {};
-                var info = {
-                    json: {}
-                };
-                var callback = this.callback;
-                files.saveJSON(info, function(){
-                    callback(null, info);
-                });
-            },
-            'no hooks called, no files saved': function(d){
-                assert.deepEqual(memblob.data, {});
-                assert(!d.indexJsonCalled);
-            }
-        },
-        'early exit (error)': {
-            topic: function() {
-                memblob.data = {};
-                var info = {
-                    json: {
-                        name: 'foo',
-                        error: 'anError'
-                    }
-                };
-                var callback = this.callback;
-                files.saveJSON(info, function(err){
-                    callback(null, {info: info, err: err});
-                });
-            },
-            'no hooks called, no files saved, err returned': function(d){
-                assert.deepEqual(memblob.data, {});
-                assert(!d.info.indexJsonCalled);
-                assert.equal(d.err, 'anError');
-            }
-        },
-        'early exit (putAllParts)': {
-            topic: function() {
-                memblob.data = {};
-                var info = {
-                    json: {name: 'foopackage'},
-                    makeError: true
-                };
-                var callback = this.callback;
-                files.saveJSON(info, function(err){
-                    callback(null, {info: info, err: err});
-                });
-            },
-            'err returned in putAllParts': function(d){
-                assert.deepEqual(memblob.data, []);
-                assert(d.info.indexJsonCalled);
-                assert.equal(d.err, testError);
-            }
-        },
-        'early exit (putPart)': {
-            topic: function() {
-                memblob.data = {};
-                var info = {
-                    json: {name: 'foopackage'},
-                    versions: [
-                        {}
-                    ]
-                };
-                var callback = this.callback;
-                files.saveJSON(info, function(){
-                    callback(null, info);
-                });
-            },
-            'returned in puAllParts, indexJson written': function(d){
-                assert.deepEqual(memblob.data, {'foopackage/index.json': '{\n    "name": "foopackage"\n}\n'});
-                assert(d.indexJsonCalled);
-                // no actual error here to test
-            }
-        },
-        'early exit (no versions)': {
-            topic: function() {
-                memblob.data = {};
-                var info = {
-                    json: {name: 'foopackage'}
-                };
-                var callback = this.callback;
-                files.saveJSON(info, function(){
-                    callback(null, info);
-                });
-            },
-            'returned before putAllParts, indexJson written': function(d){
-                assert.deepEqual(memblob.data, {'foopackage/index.json': '{\n    "name": "foopackage"\n}\n'});
-                assert(d.indexJsonCalled);
-                // no actual error here to test
-            }
-        }
-    },
-    teardown: function() {
-        mockery.deregisterAll();
-        mockery.disable();
-    }
-};
+            done();
+        });
 
-vows.describe('files').addBatch(tests).export(module);
+        it('indexJson hook called', function(done){
+            assert(info.indexJsonCalled);
+            done();
+        });
+
+        it('versionJson hook called', function(done){
+            assert(info.versions[0].versionJsonCalled);
+            assert(info.versions[1].versionJsonCalled);
+            done();
+        });
+
+        it('early exit (no top level name): no hooks called, no files saved', function(done){
+            memblob.data = {};
+            var info = {
+                json: {}
+            };
+            files.saveJSON(info, function(){
+                assert.deepEqual(memblob.data, {});
+                assert(!info.indexJsonCalled);
+                done();
+            });
+        });
+
+        it('early exit (error): no hooks called, no files saved, err returned', function(done){
+            memblob.data = {};
+            var info = {
+                json: {
+                    name: 'foo',
+                    error: 'anError'
+                }
+            };
+            files.saveJSON(info, function(err){
+                assert.deepEqual(memblob.data, {});
+                assert(!info.indexJsonCalled);
+                assert.equal(err, 'anError');
+                done();
+            });
+        });
+
+        it('early exit (putAllParts): err returned', function(done){
+            memblob.data = {};
+            var info = {
+                json: {name: 'foopackage'},
+                makeError: true
+            };
+            files.saveJSON(info, function(err){
+                assert.deepEqual(memblob.data, []);
+                assert(info.indexJsonCalled);
+                assert.equal(err, testError);
+                done();
+            });
+        });
+
+        it('early exit (putPart): returned in putAllParts, indexJson written', function (done){
+            memblob.data = {};
+            var info = {
+                json: {name: 'foopackage'},
+                versions: [
+                {}
+                ]
+            };
+            files.saveJSON(info, function(){
+                assert.deepEqual(memblob.data, {'foopackage/index.json': '{\n    "name": "foopackage"\n}\n'});
+                assert(info.indexJsonCalled);
+                // no actual error here to test
+                done();
+            });
+        });
+
+        it('early exit (no versions): returned before putAllParts, indexJson written', function(done){
+            memblob.data = {};
+            var info = {
+                json: {name: 'foopackage'}
+            };
+            files.saveJSON(info, function(){
+                assert.deepEqual(memblob.data, {'foopackage/index.json': '{\n    "name": "foopackage"\n}\n'});
+                assert(info.indexJsonCalled);
+                // no actual error here to test
+                done();
+            });
+        });
+    });
+});

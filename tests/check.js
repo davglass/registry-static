@@ -1,6 +1,6 @@
-var vows = require('vows'),
-    assert = require('assert'),
+var assert = require('assert'),
     mockery = require('mockery'),
+    log = console.log,
     noop = function() {
         var cb = arguments[arguments.length - 1];
         if (cb) {
@@ -8,101 +8,94 @@ var vows = require('vows'),
         }
     };
 
-var REPORT = false;
-
-var setupMocks = function() {
-    mockery.registerMock('davlog', {
-        quiet: noop
-    });
-    mockery.registerMock('./args', {
-        dir: '/path/to/dir',
-        get report() { return REPORT; }
-    });
-    mockery.registerMock('fs', {
-        readdir: function(d, callback) {
-            callback(null, []);
-        },
-        readFile: noop,
-        writeFile: function(f, d, callback) {
-            WRITE = JSON.parse(d);
-        }
-    });
-    mockery.registerMock('./util', {
-        check: noop
-    });
-    mockery.registerMock('./verify.js', {
-        report: function() {
-            return { report: true };
-        }
-    });
-};
+var REPORT = false, WRITE;
 
 var check;
 
-var tests = {
-    setup: function() {
-        setupMocks();
+describe('check', function(){
+    before(function(done){
+        mockery.registerMock('davlog', {
+            quiet: noop
+        });
+        mockery.registerMock('./args', {
+            dir: '/path/to/dir',
+            get report() { return REPORT; }
+        });
+        mockery.registerMock('fs', {
+            readdir: function(d, callback) {
+                callback(null, []);
+            },
+            readFile: noop,
+            writeFile: function(f, d, e, callback) {
+                WRITE = JSON.parse(d);
+                callback();
+            }
+        });
+        mockery.registerMock('./util', {
+            check: noop
+        });
+        mockery.registerMock('./verify.js', {
+            report: function() {
+                return { report: true };
+            }
+        });
         mockery.enable({
             useCleanCache: true,
             warnOnReplace: false,
             warnOnUnregistered: false
         });
         check = require('../lib/check');
-    },
-    'should export': {
-        topic: function() {
-            return check;
-        },
-        'three methods': function(d) {
-            assert.isFunction(d.check);
-            assert.isFunction(d.run);
-            assert.isFunction(d.exit);
-        }
-    },
-    'check method': {
-        topic: function() {
-            check.check('/path/foo', this.callback);
-        },
-        'should do something': function(d) {
+        done();
+    });
+
+    after(function(done){
+        mockery.disable();
+        mockery.deregisterAll();
+        done();
+    });
+
+    beforeEach(function(done){
+        console.log = function(){};
+        done();
+    });
+
+    afterEach(function(done){
+        console.log = log;
+        done();
+    });
+
+    it('should export three methods', function(done) {
+        assert.equal('function', typeof check.check);
+        assert.equal('function', typeof check.run);
+        assert.equal('function', typeof check.exit);
+        done();
+    });
+
+    it('check method should do something', function(done) {
+        check.check('/path/foo', function(err, d){
+            assert.ifError(err);
             assert.ok(d);
             var data = JSON.parse(d);
             assert.ok(data);
-            assert.isTrue(data.data);
-        }
-    },
-    'run method': {
-        topic: function() {
-            check.exit = function() {
-                EXIT = true;
-            };
-            check.run();
-            return true;
-        },
-        'should exit': function(d) {
-            assert.ok(EXIT);
-        }
-    },
-    'run method with report': {
-        topic: function() {
-            REPORT = true;
-            check.exit = function() {
-                EXIT = true;
-            };
-            check.run();
-            return true;
-        },
-        'should write file': function(d) {
+            assert(data.data);
+            done();
+        });
+    });
+
+    it('run method should exit', function(done) {
+        check.exit = function() {
+            done();
+        };
+        check.run();
+    });
+
+    it('run method with report should write file and exit', function(done){
+        REPORT = true;
+        check.exit = function() {
             assert.ok(WRITE);
             assert.ok(WRITE.report);
-        },
-        'should exit': function(d) {
-            assert.ok(EXIT);
-        }
-    },
-    teardown: function() {
-        mockery.deregisterAll();
-        mockery.disable();
-    }
-};
-
-vows.describe('check').addBatch(tests).export(module);
+            done();
+        };
+        check.run();
+    });
+});

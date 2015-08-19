@@ -1,5 +1,4 @@
-var vows = require('vows'),
-    mockery = require('mockery'),
+var mockery = require('mockery'),
     async = require('async'),
     assert = require('assert');
 
@@ -74,25 +73,16 @@ function runHooks(overrides, callback) {
     });
 }
 
-var tests = {
-    'when no hooks overridden': {
-        topic: function() {
-            runHooks([], this.callback);
-        },
-        'all the hooks work': assert.ifError
-    },
-    'when all hooks overridden': {
-        topic: function() {
-            runHooks(hookNames, this.callback);
-        },
-        'all the hooks work': assert.ifError
-    },
-    'when some hooks overridden': {
-        topic: function() {
-            runHooks(['tarball', 'versionJson'], this.callback);
-        },
-        'all the hooks work': assert.ifError
-    }
-};
+describe('hooks', function(){
+    it('when no hooks overridden, all the hooks work', function(done){
+        runHooks([], done);
+    });
 
-vows.describe('hooks').addBatch(tests).export(module);
+    it('when all hooks overridden, all the hooks work', function(done){
+        runHooks(hookNames, done);
+    });
+
+    it('when some hooks overridden, all the hooks work', function(done){
+        runHooks(['tarball', 'versionJson'], done);
+    });
+});
