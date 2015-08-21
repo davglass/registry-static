@@ -160,6 +160,7 @@ Here are the currently provided hooks:
 * **`tarball`**: Called before downloading/verifying/writing a package tarball.
 * **`afterTarball`**: Called after downloading/verifying/writing a package tarball. If there is no error, the callback parameters are ignored.
 * **`startup`**: Called before doing anything else at start time.
+* **`shasumCheck`**: Called in order to check the `sha1sum` of a tarball. Calling back with true implies the shasum passed. Default is in `lib/defaultShasumCheck.js`.
 
 Some examples are included in the `examples` directory.
 
