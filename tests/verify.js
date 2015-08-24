@@ -44,6 +44,7 @@ describe('verify', function(){
             get registry() {
                 return badRegistry ? 'http://fhgidygfi' : 'http://registry.npmjs.org';
             },
+            hooks: {},
             blobstore: memblob
         });
         mockery.registerMock('davlog', {
@@ -193,8 +194,8 @@ describe('verify', function(){
                 assert.ifError(err);
                 assert(info.updateCalled);
                 assert.deepEqual(log, [
-                        ' [0] shasum check failed for /the/path/4',
-                        ' [0] found 3da541559918a808c2402bba5012f6c60b27661c expected badHash'
+                        'shasum check failed for /the/path/4',
+                        'found 3da541559918a808c2402bba5012f6c60b27661c expected badHash'
                 ]);
                 done();
             });

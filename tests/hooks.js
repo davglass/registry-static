@@ -12,7 +12,8 @@ var hookNames = [
     'versionJson',
     'indexJson',
     'globalIndexJson',
-    'startup'
+    'startup',
+    'shasumCheck'
 ];
 var testError = new Error();
 
@@ -25,8 +26,11 @@ function getHooks(overrides) {
         });
     }
     options.hooks = optHooks;
-    mockery.registerMock('./args.js', options);
+    mockery.registerMock('./args', options);
     mockery.registerMock('davlog', davlog);
+    mockery.registerMock('./defaultShasumCheck', function(data, callback){
+        callback(null, true);
+    });
     mockery.enable({
         useCleanCache: true,
         warnOnReplace: false,
