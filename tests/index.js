@@ -176,7 +176,7 @@ describe('index', function(){
                 name: 'foo'
             }
         }, function() {
-            var result = JSON.parse(memblob.data['index.json']);
+            var result = JSON.parse(memblob.data['-/index.json']);
             memblob.data = {};
             assert.equal(result.couchdb, 'Welcome');
             assert.equal(result.processing, 'foo');
@@ -196,7 +196,7 @@ describe('index', function(){
                 return done(err);
             }
             skipped.push(data);
-            opts.blobstore.data = {'index.json': 'asdf'};
+            opts.blobstore.data = {'-/index.json': 'asdf'};
             index.defaults(opts, function(err, data){
                 if (err) {
                     return done(err);
@@ -217,7 +217,7 @@ describe('index', function(){
             },
             versions: ['']
         }, function() {
-            var d = JSON.parse(memblob.data['index.json']);
+            var d = JSON.parse(memblob.data['-/index.json']);
 
             assert.equal(d.couchdb, 'Welcome');
             assert.equal(d.processing, 'bar');

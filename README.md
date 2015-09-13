@@ -64,6 +64,9 @@ Since we are writing a bunch of `index.json` files, you need to setup `nginx` to
     myregistry.com/foo
                     /index.json
 
+Note also that we write `404.json` and the top-level `index.json` to the '-' directory under the root, in order to not
+collide with packages that might have those names.
+
 Here is the simple `nginx.config` that I use on my local mirror.
 
     server {
@@ -84,17 +87,17 @@ Here is the simple `nginx.config` that I use on my local mirror.
         }
 
         #don't cache the main index
-        location /index.json {
+        location /-/index.json {
             expires -1;
         }
 
         #cache all json by modified time
         location / {
             expires modified +15m;
-            try_files $uri $uri/index.json $uri.json =404;
+            try_files $uri $uri/-/index.json $uri/index.json $uri.json =404;
         }
 
-        error_page  404              /404.json;
+        error_page  404              /-/404.json;
     }
 
 
