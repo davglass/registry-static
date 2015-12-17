@@ -90,7 +90,6 @@ describe('files', function(){
                 path: 'foopath1.tgz'
             }
             ];
-            var callback = this.callback;
             files.saveTarballs(tarballs, done);
         });
 
@@ -124,6 +123,35 @@ describe('files', function(){
                 assert.strictEqual(err, testError);
                 done();
             });
+        });
+    });
+
+    describe('saveTarballs (w/ bad tarball data)', function(){
+        var tarballs;
+        before(function(done){
+            tarballs = [
+            {
+                path: 'http://example.com/'
+            }
+            ];
+            files.saveTarballs(tarballs, done);
+        });
+
+        it('set tarball property', function(done) {
+            // sets it to something weird, but that's okay because nothing
+            // gets called
+            assert.equal(tarballs[0].tarball, 'http:/example.com/');
+            done();
+        });
+        it('tarball hook not called', function(done) {
+            assert(!tarballs[0].tarballCalled);
+            assert(!tarballs[0].tarballPathCorrect);
+            done();
+        });
+        it('afterTarball hook not called', function(done) {
+            assert(!tarballs[0].afterTarballCalled);
+            assert(!tarballs[0].callbacksEqual);
+            done();
         });
     });
 
