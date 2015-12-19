@@ -47,7 +47,7 @@ describe('verify', function(){
             hooks: {},
             blobstore: memblob
         });
-        mockery.registerMock('davlog', {
+        mockery.registerMock('./logger', {
             init: noop,
             info: noop,
             warn: noop,

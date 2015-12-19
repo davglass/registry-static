@@ -18,10 +18,7 @@ if (options.help || options.version) {
     return;
 }
 
-var logger = require('../lib/logger');
-logger();
-
-var log = require('davlog');
+var log = require('../lib/logger');
 
 if (options.sync) {
     return require('../lib/sync')(options);
