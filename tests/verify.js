@@ -73,7 +73,7 @@ describe('verify', function(){
 
     it('should export an object with methods', function(done){
         assert.equal(typeof verify, 'object');
-        ['verify', 'update', 'report', 'counter'].forEach(function(name) {
+        ['verify', 'update', 'counter'].forEach(function(name) {
             assert.equal(typeof verify[name], 'function');
         });
         done();
