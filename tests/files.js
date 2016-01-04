@@ -51,7 +51,7 @@ describe('files', function(){
         mockery.registerMock('mkdirp', function(dir, callback) {
             callback();
         });
-        mockery.registerMock('davlog', {
+        mockery.registerMock('./logger', {
             init: noop,
             info: noop,
             warn: noop

@@ -27,7 +27,7 @@ function getHooks(overrides) {
     }
     options.hooks = optHooks;
     mockery.registerMock('./args', options);
-    mockery.registerMock('davlog', davlog);
+    mockery.registerMock('./logger', davlog);
     mockery.registerMock('./defaultShasumCheck', function(data, callback){
         callback(null, true);
     });

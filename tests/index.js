@@ -64,8 +64,7 @@ describe('index', function(){
                 success();
             }
         });
-        mockery.registerMock('./logger', noop);
-        mockery.registerMock('davlog', {
+        mockery.registerMock('./logger', {
             init: noop,
             info: noop,
             warn: noop
