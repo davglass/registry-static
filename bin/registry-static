@@ -11,7 +11,6 @@ var mkdirp = require('mkdirp');
 var options = require('../lib/args');
 var hooks = require('../lib/hooks');
 var fs = require('fs');
-var strip = require('strip-ansi');
 
 if (options.help || options.version) {
     require('../lib/index');
