@@ -5,6 +5,7 @@ var assert = require('assert'),
 
 var noop = function() { return ''; };
 var called = {};
+var oneData = [];
 var CLEAN = false;
 var CONF;
 var SINCE;
@@ -68,6 +69,10 @@ describe('index', function(){
             init: noop,
             info: noop,
             warn: noop
+        });
+        mockery.registerMock('./one', function(data, callback) {
+            oneData.push(data);
+            callback();
         });
         mockery.enable({
             useCleanCache: true,
@@ -233,6 +238,40 @@ describe('index', function(){
             var newCalled = called;
             called = oldCalled;
             assert.deepEqual({}, newCalled);
+            done();
+        });
+    });
+
+    it('change method checks for scoped dependencies', function(done){
+        index.change({
+            json: {
+                name: 'bar',
+                'dist-tags' : {
+                    latest: '1.0.0'
+                },
+                versions: {}
+            },
+            versions: [
+                {
+                    json: {
+                        version: '1.0.0',
+                        dependencies: {
+                            'foo-one': '1.0.0',
+                            '@bar/one': '1.0.0'
+                        },
+                        devDependencies: {
+                            'foo-two': '1.0.0',
+                            '@bar/two': '1.0.0'
+                        },
+                        optionalDependencies: {
+                            'foo-three': '1.0.0',
+                            '@bar/three': '1.0.0'
+                        }
+                    }
+                }
+            ]
+        }, function() {
+            assert.deepEqual(oneData, ['@bar/one', '@bar/two', '@bar/three']);
             done();
         });
     });
