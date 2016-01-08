@@ -56,7 +56,11 @@ describe('one', function(){
     before(function(done){
         mockery.registerMock('request', {
             get: function(url, opts, cb){
-                assert.equal(url, 'https://registry.npmjs.org/foo');
+                try {
+                    assert.equal(url, 'https://registry.npmjs.org/foo');
+                } catch (e) {
+                    assert.equal(url, 'https://registry.npmjs.org/@foo%2Fbar');
+                }
                 assert.deepEqual(opts, {json: true});
                 cb.apply(null, getResponse);
             }
@@ -89,6 +93,31 @@ describe('one', function(){
     it('with a package name saves tarballs and json', function(done) {
         getResponse = [null, {statusCode: 200}, goodBody];
         one('foo', function(){
+
+            assert.deepEqual(savedTarballs, [
+                {path: '/foo/1.tgz', tarball: 'http://example.com/foo/1.tgz', shasum: '123abc'},
+                {path: '/foo/2.tgz', tarball: 'http://example.com/foo/2.tgz', shasum: '456def'}
+            ]);
+
+            assert.deepEqual(savedJSON, {
+                json: goodBody,
+                versions: [
+                    {version: 'latest', json: goodBody.versions['1']},
+                    {version: 'alpha', json: goodBody.versions['2']},
+                    {version: '1', json: goodBody.versions['1']},
+                    {version: '2', json: goodBody.versions['2']}
+                ],
+                tarballs: [
+                    {path: '/foo/1.tgz', tarball: 'http://example.com/foo/1.tgz', shasum: '123abc'},
+                    {path: '/foo/2.tgz', tarball: 'http://example.com/foo/2.tgz', shasum: '456def'}
+                ]
+            });
+            done();
+        });
+    });
+    it('with scoped package name saves tarballs and json', function(done) {
+        getResponse = [null, {statusCode: 200}, goodBody];
+        one('@foo/bar', function(){
 
             assert.deepEqual(savedTarballs, [
                 {path: '/foo/1.tgz', tarball: 'http://example.com/foo/1.tgz', shasum: '123abc'},
