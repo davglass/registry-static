@@ -117,7 +117,7 @@ describe('verify', function(){
         it('tries to download with a 404 file and calls back with an error', function(done){
             var callback = this.callback;
             var info = {
-                path: '//foobarbaz.tgz',
+                path: '//foo/-/foooooofakeooooooooofakeo-1.0.0.tgz',
                 tarball: 'foo-1.0.0.tgz'
             };
             verify.update(info, function(err) {
