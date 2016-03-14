@@ -13,6 +13,7 @@
     "dnscache": "~0.0.3",
     "event-stream": "^3.1.5",
     "follow-registry": "^1.0.7",
+    "express": "^4.13.4",
     "fs-blob-store": "^5.1.1",
     "graceful-fs": "^2.0.3",
     "http-https": "^1.0.0",
@@ -33,7 +34,8 @@
     "jshint": "^2.5.1",
     "marked-man": "^0.1.4",
     "mocha": "^2.2.5",
-    "mockery": "^1.4.0"
+    "mockery": "^1.4.0",
+    "supertest": "^1.2.0"
   },
   "scripts": {
     "prepublish": "mkdirp man && marked-man README.md > man/registry-static.1",

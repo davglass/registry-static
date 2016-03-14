@@ -36,6 +36,9 @@ if (options.one) {
 if (options.replport) {
     require('../lib/repl')();
 }
+if (options.httpport) {
+    require('../lib/http')();
+}
 
 hooks.startup({}, function(){}, function(){
     require('../lib/index').start();
