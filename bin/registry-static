@@ -12,6 +12,8 @@ var options = require('../lib/args');
 var hooks = require('../lib/hooks');
 var fs = require('fs');
 
+var webapp;
+
 if (options.help || options.version) {
     require('../lib/index');
     return;
@@ -37,10 +39,10 @@ if (options.replport) {
     require('../lib/repl')();
 }
 if (options.httpport) {
-    require('../lib/http')();
+    webapp = require('../lib/http')();
 }
 
-hooks.startup({}, function(){}, function(){
+hooks.startup({webapp: webapp}, function(){}, function(){
     require('../lib/index').start();
 });
 
