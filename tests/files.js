@@ -178,7 +178,7 @@ describe('files', function(){
 
         it('saves 3 json files', function (done){
             assert.deepEqual(memblob.data, {
-                'foopackage/index.json': '{\n    "name": "foopackage"\n}\n',
+                'foopackage/index.json': '{\n    "name": "foopackage",\n    \"versions\": {}\n}\n',
                 'foopackage/1.0.0/index.json': '{\n    "name": "foopackage"\n}\n',
                 'foopackage/2.0.0/index.json': '{\n    "name": "foopackage"\n}\n'
             });
@@ -247,7 +247,7 @@ describe('files', function(){
                 ]
             };
             files.saveJSON(info, function(){
-                assert.deepEqual(memblob.data, {'foopackage/index.json': '{\n    "name": "foopackage"\n}\n'});
+                assert.deepEqual(memblob.data, {'foopackage/index.json': '{\n    "name": "foopackage",\n    \"versions\": {}\n}\n'});
                 assert(info.indexJsonCalled);
                 // no actual error here to test
                 done();
@@ -260,9 +260,111 @@ describe('files', function(){
                 json: {name: 'foopackage'}
             };
             files.saveJSON(info, function(){
-                assert.deepEqual(memblob.data, {'foopackage/index.json': '{\n    "name": "foopackage"\n}\n'});
+                assert.deepEqual(memblob.data, {'foopackage/index.json': '{\n    "name": "foopackage",\n    \"versions\": {}\n}\n'});
                 assert(info.indexJsonCalled);
                 // no actual error here to test
+                done();
+            });
+        });
+
+        it('deletions in new data', function(done){
+            memblob.data = {'foopackage/index.json': JSON.stringify({
+                name: "foopackage",
+                versions: {
+                    '0.0.1': {name: 'foopackage'},
+                    '1.0.0': {name: 'foopackage'}
+                }
+            }, null, '    ')};
+            info = {
+                json: {
+                    name: 'foopackage',
+                    versions: {
+                        '1.0.0': {name: 'foopackage'},
+                        '2.0.0': {name: 'foopackage'}
+                    }
+                },
+                seq: 97,
+                latestSeq: 42,
+                versions: [
+                {
+                    json: {name: 'foopackage'},
+                    version: '1.0.0'
+                },
+                {
+                    json: {name: 'foopackage'},
+                    version: '2.0.0'
+                }
+                ]
+            };
+            files.saveJSON(info, function(){
+                var doc = JSON.parse(memblob.data['foopackage/index.json']);
+                assert(doc.versions['0.0.1']);
+                assert(doc.versions['1.0.0']);
+                assert(doc.versions['2.0.0']);
+                done();
+            });
+        });
+
+        it('deletions in new data (bad old data)', function(done){
+            memblob.data = {'foopackage/index.json': JSON.stringify({
+                name: "foopackage"
+            }, null, '    ')};
+            info = {
+                json: {
+                    name: 'foopackage',
+                    versions: {
+                        '1.0.0': {name: 'foopackage'},
+                        '2.0.0': {name: 'foopackage'}
+                    }
+                },
+                seq: 97,
+                latestSeq: 42,
+                versions: [
+                {
+                    json: {name: 'foopackage'},
+                    version: '1.0.0'
+                },
+                {
+                    json: {name: 'foopackage'},
+                    version: '2.0.0'
+                }
+                ]
+            };
+            files.saveJSON(info, function(){
+                var doc = JSON.parse(memblob.data['foopackage/index.json']);
+                assert(doc.versions['1.0.0']);
+                assert(doc.versions['2.0.0']);
+                done();
+            });
+        });
+
+        it('deletions in new data (bad new data)', function(done){
+            memblob.data = {'foopackage/index.json': JSON.stringify({
+                name: "foopackage",
+                versions: {
+                    '0.0.1': {name: 'foopackage'}
+                }
+            }, null, '    ')};
+            info = {
+                json: {
+                    name: 'foopackage'
+                },
+                seq: 97,
+                latestSeq: 42,
+                versions: [
+                {
+                    json: {name: 'foopackage'},
+                    version: '1.0.0'
+                },
+                {
+                    json: {name: 'foopackage'},
+                    version: '2.0.0'
+                }
+                ]
+            };
+            files.saveJSON(info, function(){
+                var doc = JSON.parse(memblob.data['foopackage/index.json']);
+                assert(doc.versions['0.0.1']);
                 done();
             });
         });
