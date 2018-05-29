@@ -42,7 +42,7 @@ describe('verify', function(){
     before(function(done){
         mockery.registerMock('./args', {
             get registry() {
-                return badRegistry ? 'http://fhgidygfi' : 'http://registry.npmjs.org';
+                return badRegistry ? 'http://fhgidygfi' : 'https://registry.npmjs.org';
             },
             hooks: {},
             blobstore: memblob
