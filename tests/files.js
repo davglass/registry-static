@@ -368,5 +368,26 @@ describe('files', function(){
                 done();
             });
         });
+
+        it('survives invalid json in the blobstore', function(done){
+            memblob.data = {'foopackage/index.json': 'invalid json'};
+            info = {
+                json: {
+                    name: 'foopackage',
+                    versions: {
+                      '1.0.0': {name: 'foopackage'},
+                      '2.0.0': {name: 'foopackage'}
+                    }
+                },
+                seq: 97,
+                latestSeq: 42
+            };
+            files.saveJSON(info, function(){
+                var doc = JSON.parse(memblob.data['foopackage/index.json']);
+                assert(doc.versions['1.0.0']);
+                assert(doc.versions['2.0.0']);
+                done();
+            });
+        });
     });
 });
