@@ -8,7 +8,7 @@
   "man": "./man/registry-static.1",
   "main": "./lib/index.js",
   "dependencies": {
-    "async": "~0.8.0",
+    "async": "~3.2.2",
     "davlog": "~1.1.0",
     "dnscache": "0.0.4",
     "event-stream": "^3.3.4",
