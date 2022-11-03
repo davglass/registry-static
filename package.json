@@ -33,7 +33,7 @@
     "istanbul": "^0.4.5",
     "jshint": "^2.9.5",
     "marked-man": "^0.1.6",
-    "mocha": "^2.5.3",
+    "mocha": "^10.1.0",
     "mockery": "^1.7.0",
     "supertest": "^1.2.0"
   },
